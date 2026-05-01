@@ -2,6 +2,7 @@ package dev.pieter.simulated_pistons;
 
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import dev.pieter.simulated_pistons.index.SPBlocks;
+import dev.pieter.simulated_pistons.content.SPPlacementHelpers;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -13,6 +14,7 @@ public class SimulatedPistons {
     public SimulatedPistons(final IEventBus modBus) {
         SPBlocks.register(modBus);
         SPBlockEntityTypes.register(modBus);
+        SPPlacementHelpers.init();
     }
 
     public static ResourceLocation path(final String path) {

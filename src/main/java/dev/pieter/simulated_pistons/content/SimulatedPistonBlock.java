@@ -4,7 +4,6 @@ import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.content.kinetics.simpleRelays.CogWheelBlock;
 import com.simibubi.create.foundation.block.IBE;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import dev.simulated_team.simulated.util.extra_kinetics.ExtraKinetics;
@@ -15,7 +14,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
@@ -26,7 +24,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
@@ -56,8 +53,9 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
 
     @Override
     protected ItemInteractionResult useItemOn(final ItemStack stack, final BlockState state, final Level level, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult hitResult) {
-        if (this.tryPlaceCog(stack, state, level, pos, player, hitResult)) {
-            return ItemInteractionResult.SUCCESS;
+        final ItemInteractionResult cogPlacement = SPPlacementHelpers.tryPlaceCog(stack, state, level, pos, player, hand, hitResult);
+        if (cogPlacement.consumesAction()) {
+            return cogPlacement;
         }
 
         if (!player.mayBuild() || player.isShiftKeyDown() || !player.getItemInHand(hand).isEmpty()) {
@@ -72,40 +70,6 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
             this.withBlockEntityDo(level, pos, SimulatedPistonBlockEntity::resetExtension);
         }
         return ItemInteractionResult.SUCCESS;
-    }
-
-    private boolean tryPlaceCog(final ItemStack stack, final BlockState state, final Level level, final BlockPos pos, final Player player, final BlockHitResult hitResult) {
-        if (!player.mayBuild() || player.isShiftKeyDown() || !state.getValue(SEGMENT).hasController()) {
-            return false;
-        }
-
-        if (!(stack.getItem() instanceof final BlockItem blockItem) || !(blockItem.getBlock() instanceof CogWheelBlock)) {
-            return false;
-        }
-
-        final Direction.Axis pistonAxis = state.getValue(FACING).getAxis();
-        final Direction clickedFace = hitResult.getDirection();
-        if (clickedFace.getAxis() == pistonAxis) {
-            return false;
-        }
-
-        final BlockPos cogPos = pos.relative(clickedFace);
-        if (!level.getBlockState(cogPos).canBeReplaced()) {
-            return false;
-        }
-
-        BlockState cogState = blockItem.getBlock().defaultBlockState();
-        if (cogState.hasProperty(BlockStateProperties.AXIS)) {
-            cogState = cogState.setValue(BlockStateProperties.AXIS, pistonAxis);
-        }
-
-        if (!level.isClientSide) {
-            level.setBlock(cogPos, cogState, Block.UPDATE_ALL);
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
-            }
-        }
-        return true;
     }
 
     @Override
