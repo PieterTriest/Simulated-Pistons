@@ -14,7 +14,7 @@ public class SPBlockEntityTypes {
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SimulatedPistonBlockEntity>> SIMULATED_PISTON =
             BLOCK_ENTITY_TYPES.register("simulated_piston", () -> BlockEntityType.Builder
-                    .of(SimulatedPistonBlockEntity::new, SPBlocks.SIMULATED_PISTON.get())
+                    .of(SimulatedPistonBlockEntity::create, SPBlocks.SIMULATED_PISTON.get())
                     .build(null));
 
     public static void register(final IEventBus modBus) {

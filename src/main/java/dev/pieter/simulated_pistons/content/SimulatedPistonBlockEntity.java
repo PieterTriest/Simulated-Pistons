@@ -1,6 +1,7 @@
 package dev.pieter.simulated_pistons.content;
 
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -13,6 +14,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity {
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
+    }
+
+    public static SimulatedPistonBlockEntity create(final BlockPos pos, final BlockState state) {
+        return new SimulatedPistonBlockEntity(SPBlockEntityTypes.SIMULATED_PISTON.get(), pos, state);
     }
 
     @Override
