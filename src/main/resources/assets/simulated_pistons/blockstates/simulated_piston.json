@@ -1,0 +1,31 @@
+{
+  "variants": {
+    "facing=down,segment=single": { "model": "simulated_pistons:block/simulated_piston/single", "x": 180 },
+    "facing=up,segment=single": { "model": "simulated_pistons:block/simulated_piston/single" },
+    "facing=north,segment=single": { "model": "simulated_pistons:block/simulated_piston/single", "x": 90 },
+    "facing=south,segment=single": { "model": "simulated_pistons:block/simulated_piston/single", "x": 90, "y": 180 },
+    "facing=west,segment=single": { "model": "simulated_pistons:block/simulated_piston/single", "x": 90, "y": 270 },
+    "facing=east,segment=single": { "model": "simulated_pistons:block/simulated_piston/single", "x": 90, "y": 90 },
+
+    "facing=down,segment=controller": { "model": "simulated_pistons:block/simulated_piston/controller", "x": 180 },
+    "facing=up,segment=controller": { "model": "simulated_pistons:block/simulated_piston/controller" },
+    "facing=north,segment=controller": { "model": "simulated_pistons:block/simulated_piston/controller", "x": 90 },
+    "facing=south,segment=controller": { "model": "simulated_pistons:block/simulated_piston/controller", "x": 90, "y": 180 },
+    "facing=west,segment=controller": { "model": "simulated_pistons:block/simulated_piston/controller", "x": 90, "y": 270 },
+    "facing=east,segment=controller": { "model": "simulated_pistons:block/simulated_piston/controller", "x": 90, "y": 90 },
+
+    "facing=down,segment=middle": { "model": "simulated_pistons:block/simulated_piston/middle", "x": 180 },
+    "facing=up,segment=middle": { "model": "simulated_pistons:block/simulated_piston/middle" },
+    "facing=north,segment=middle": { "model": "simulated_pistons:block/simulated_piston/middle", "x": 90 },
+    "facing=south,segment=middle": { "model": "simulated_pistons:block/simulated_piston/middle", "x": 90, "y": 180 },
+    "facing=west,segment=middle": { "model": "simulated_pistons:block/simulated_piston/middle", "x": 90, "y": 270 },
+    "facing=east,segment=middle": { "model": "simulated_pistons:block/simulated_piston/middle", "x": 90, "y": 90 },
+
+    "facing=down,segment=head": { "model": "simulated_pistons:block/simulated_piston/head", "x": 180 },
+    "facing=up,segment=head": { "model": "simulated_pistons:block/simulated_piston/head" },
+    "facing=north,segment=head": { "model": "simulated_pistons:block/simulated_piston/head", "x": 90 },
+    "facing=south,segment=head": { "model": "simulated_pistons:block/simulated_piston/head", "x": 90, "y": 180 },
+    "facing=west,segment=head": { "model": "simulated_pistons:block/simulated_piston/head", "x": 90, "y": 270 },
+    "facing=east,segment=head": { "model": "simulated_pistons:block/simulated_piston/head", "x": 90, "y": 90 }
+  }
+}

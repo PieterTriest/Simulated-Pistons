@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " A ",
+    "ICI",
+    " S "
+  ],
+  "key": {
+    "A": "create:andesite_alloy",
+    "I": "create:iron_sheet",
+    "C": "create:andesite_casing",
+    "S": "create:shaft"
+  },
+  "result": {
+    "id": "simulated_pistons:simulated_piston",
+    "count": 1
+  }
+}
