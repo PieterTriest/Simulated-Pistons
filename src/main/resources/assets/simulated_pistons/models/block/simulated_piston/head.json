@@ -1,20 +1,42 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "end": "minecraft:block/polished_andesite",
+    "housing": "minecraft:block/iron_block",
+    "shaft": "simulated:block/auger_shaft/auger",
     "particle": "minecraft:block/iron_block"
   },
   "elements": [
     {
-      "from": [0, 0, 0],
-      "to": [16, 12, 16],
+      "from": [1, 0, 1],
+      "to": [15, 12, 15],
       "faces": {
-        "north": { "texture": "#particle", "uv": [0, 4, 16, 16] },
-        "east": { "texture": "#particle", "uv": [0, 4, 16, 16] },
-        "south": { "texture": "#particle", "uv": [0, 4, 16, 16] },
-        "west": { "texture": "#particle", "uv": [0, 4, 16, 16] },
-        "up": { "texture": "#particle", "uv": [0, 0, 16, 16] },
-        "down": { "texture": "#end", "uv": [0, 0, 16, 16] }
+        "north": { "texture": "#shaft", "uv": [0, 2, 7, 8] },
+        "east": { "texture": "#shaft", "uv": [0, 2, 7, 8] },
+        "south": { "texture": "#shaft", "uv": [0, 2, 7, 8] },
+        "west": { "texture": "#shaft", "uv": [0, 2, 7, 8] }
+      }
+    },
+    {
+      "from": [0, 12, 0],
+      "to": [16, 14, 16],
+      "faces": {
+        "north": { "texture": "#housing", "uv": [0, 12, 16, 14] },
+        "east": { "texture": "#housing", "uv": [0, 12, 16, 14] },
+        "south": { "texture": "#housing", "uv": [0, 12, 16, 14] },
+        "west": { "texture": "#housing", "uv": [0, 12, 16, 14] },
+        "up": { "texture": "#housing", "uv": [0, 0, 16, 16] },
+        "down": { "texture": "#housing", "uv": [0, 0, 16, 16] }
+      }
+    },
+    {
+      "from": [3, 12, 3],
+      "to": [13, 14, 13],
+      "faces": {
+        "north": { "texture": "#housing", "uv": [3, 12, 13, 14] },
+        "east": { "texture": "#housing", "uv": [3, 12, 13, 14] },
+        "south": { "texture": "#housing", "uv": [3, 12, 13, 14] },
+        "west": { "texture": "#housing", "uv": [3, 12, 13, 14] },
+        "up": { "texture": "#housing", "uv": [3, 3, 13, 13] }
       }
     }
   ]

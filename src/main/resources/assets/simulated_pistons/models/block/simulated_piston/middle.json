@@ -1,8 +1,3 @@
 {
-  "parent": "minecraft:block/cube_column",
-  "textures": {
-    "end": "create:block/shaft_top",
-    "side": "minecraft:block/smooth_stone",
-    "particle": "minecraft:block/smooth_stone"
-  }
+  "parent": "simulated:block/auger_shaft/axis_y"
 }
