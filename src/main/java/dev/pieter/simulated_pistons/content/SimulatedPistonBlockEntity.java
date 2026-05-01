@@ -10,12 +10,18 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Method;
+import java.util.UUID;
 
 public class SimulatedPistonBlockEntity extends KineticBlockEntity implements ExtraKinetics {
     private final PistonCogBlockEntity cogwheel;
@@ -24,6 +30,13 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private float lastActuatorSpeed;
     private float lastMovementSpeed;
     private float lastTargetExtension;
+    @Nullable
+    private UUID subLevelId;
+    @Nullable
+    private BlockPos subLevelAnchor;
+    @Nullable
+    private BlockPos disassemblyGoal;
+    private String lastAssemblyStatus = "idle";
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
@@ -78,6 +91,23 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
     public float getExtension() {
         return this.extension;
+    }
+
+    public void resetExtension() {
+        if (this.isAttachmentAssembled()) {
+            this.disassembleAttachment();
+            return;
+        }
+
+        this.assembleAttachment();
+    }
+
+    private void resetExtensionOnly() {
+        this.extension = 0;
+        this.lastMovementSpeed = 0;
+        this.lastTargetExtension = 0;
+        this.setChanged();
+        this.sendData();
     }
 
     private float getActuatorSpeed() {
@@ -140,6 +170,102 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         return "PistonCog";
     }
 
+    public boolean isAttachmentAssembled() {
+        return this.subLevelId != null;
+    }
+
+    public void assembleAttachment() {
+        if (this.level == null || this.level.isClientSide || this.isAttachmentAssembled()) {
+            return;
+        }
+
+        final BlockState state = this.getBlockState();
+        if (!(state.getBlock() instanceof SimulatedPistonBlock)) {
+            return;
+        }
+
+        final Direction facing = state.getValue(SimulatedPistonBlock.FACING);
+        final BlockPos headPos = this.worldPosition.relative(facing, Math.max(0, this.chainLength - 1));
+        final BlockPos toAssemble = headPos.relative(facing);
+
+        try {
+            final Class<?> helperClass = Class.forName("dev.simulated_team.simulated.util.SimAssemblyHelper");
+            final Method assemble = helperClass.getMethod(
+                    "assembleFromSingleBlock",
+                    net.minecraft.world.level.Level.class,
+                    BlockPos.class,
+                    BlockPos.class,
+                    boolean.class,
+                    boolean.class
+            );
+
+            final Object result = assemble.invoke(null, this.level, headPos, toAssemble, false, false);
+            if (result == null) {
+                this.lastAssemblyStatus = "nothing_to_assemble";
+                this.setChanged();
+                this.sendData();
+                return;
+            }
+
+            final Object subLevel = result.getClass().getMethod("subLevel").invoke(result);
+            final BlockPos offset = (BlockPos) result.getClass().getMethod("offset").invoke(result);
+            this.subLevelId = (UUID) subLevel.getClass().getMethod("getUniqueId").invoke(subLevel);
+            this.subLevelAnchor = toAssemble.offset(offset);
+            this.disassemblyGoal = toAssemble;
+            this.lastAssemblyStatus = "assembled";
+            this.setChanged();
+            this.sendData();
+        } catch (final ReflectiveOperationException e) {
+            this.lastAssemblyStatus = e.getClass().getSimpleName();
+            this.setChanged();
+            this.sendData();
+        }
+    }
+
+    public void disassembleAttachment() {
+        if (this.level == null || this.level.isClientSide || this.subLevelId == null || this.subLevelAnchor == null || this.disassemblyGoal == null) {
+            this.resetExtensionOnly();
+            return;
+        }
+
+        try {
+            final Class<?> containerClass = Class.forName("dev.ryanhcode.sable.api.sublevel.SubLevelContainer");
+            final Object container = containerClass
+                    .getMethod("getContainer", net.minecraft.world.level.Level.class)
+                    .invoke(null, this.level);
+            final Object subLevel = container
+                    .getClass()
+                    .getMethod("getSubLevel", UUID.class)
+                    .invoke(container, this.subLevelId);
+
+            if (subLevel != null) {
+                final Class<?> helperClass = Class.forName("dev.simulated_team.simulated.util.SimAssemblyHelper");
+                final Class<?> subLevelClass = Class.forName("dev.ryanhcode.sable.sublevel.SubLevel");
+                helperClass
+                        .getMethod(
+                                "disassembleSubLevel",
+                                net.minecraft.world.level.Level.class,
+                                subLevelClass,
+                                BlockPos.class,
+                                BlockPos.class,
+                                Rotation.class,
+                                boolean.class
+                        )
+                        .invoke(null, this.level, subLevel, this.subLevelAnchor, this.disassemblyGoal, Rotation.NONE, true);
+            }
+
+            this.subLevelId = null;
+            this.subLevelAnchor = null;
+            this.disassemblyGoal = null;
+            this.lastAssemblyStatus = "disassembled";
+            this.resetExtensionOnly();
+        } catch (final ReflectiveOperationException e) {
+            this.lastAssemblyStatus = e.getClass().getSimpleName();
+            this.setChanged();
+            this.sendData();
+        }
+    }
+
     @Override
     public float calculateStressApplied() {
         return 0;
@@ -153,6 +279,16 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         tag.putFloat("LastActuatorSpeed", this.lastActuatorSpeed);
         tag.putFloat("LastMovementSpeed", this.lastMovementSpeed);
         tag.putFloat("LastTargetExtension", this.lastTargetExtension);
+        tag.putString("LastAssemblyStatus", this.lastAssemblyStatus);
+        if (this.subLevelId != null) {
+            tag.putUUID("SubLevelID", this.subLevelId);
+        }
+        if (this.subLevelAnchor != null) {
+            tag.put("SubLevelAnchor", NbtUtils.writeBlockPos(this.subLevelAnchor));
+        }
+        if (this.disassemblyGoal != null) {
+            tag.put("DisassemblyGoal", NbtUtils.writeBlockPos(this.disassemblyGoal));
+        }
     }
 
     @Override
@@ -160,6 +296,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         super.read(tag, registries, clientPacket);
         this.chainLength = Math.max(1, tag.getInt("ChainLength"));
         this.extension = Math.min(tag.getFloat("Extension"), this.chainLength);
+        this.lastAssemblyStatus = tag.getString("LastAssemblyStatus");
+        this.subLevelId = tag.hasUUID("SubLevelID") ? tag.getUUID("SubLevelID") : null;
+        this.subLevelAnchor = tag.contains("SubLevelAnchor") ? NbtUtils.readBlockPos(tag, "SubLevelAnchor").orElse(null) : null;
+        this.disassemblyGoal = tag.contains("DisassemblyGoal") ? NbtUtils.readBlockPos(tag, "DisassemblyGoal").orElse(null) : null;
     }
 
     public static class PistonCogBlockEntity extends KineticBlockEntity implements ExtraKinetics.ExtraKineticsBlockEntity {
