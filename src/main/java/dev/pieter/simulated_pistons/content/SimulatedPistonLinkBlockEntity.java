@@ -27,6 +27,7 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
     private BlockPos parent;
     @Nullable
     private UUID parentSubLevelId;
+    private int chainLength = 1;
     private boolean assembling;
 
     public SimulatedPistonLinkBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
@@ -50,8 +51,13 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
         this.assembling = false;
         this.parent = parent.getBlockPos();
         this.parentSubLevelId = parentSubLevel != null ? parentSubLevel.getUniqueId() : null;
+        this.chainLength = parent.getChainLength();
         this.setChanged();
         this.sendData();
+    }
+
+    public int getChainLength() {
+        return this.chainLength;
     }
 
     @Override
@@ -105,6 +111,7 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
         if (this.parentSubLevelId != null) {
             tag.putUUID("ParentSubLevelId", this.parentSubLevelId);
         }
+        tag.putInt("ChainLength", this.chainLength);
     }
 
     @Override
@@ -112,5 +119,6 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
         super.read(tag, registries, clientPacket);
         this.parent = tag.contains("ParentPos") ? NbtUtils.readBlockPos(tag, "ParentPos").orElse(null) : null;
         this.parentSubLevelId = tag.hasUUID("ParentSubLevelId") ? tag.getUUID("ParentSubLevelId") : null;
+        this.chainLength = Math.max(1, tag.getInt("ChainLength"));
     }
 }

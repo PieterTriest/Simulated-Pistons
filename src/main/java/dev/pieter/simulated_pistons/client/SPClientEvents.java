@@ -12,5 +12,6 @@ public class SPClientEvents {
     @SubscribeEvent
     public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(SPBlockEntityTypes.SIMULATED_PISTON.get(), SimulatedPistonRenderer::new);
+        event.registerBlockEntityRenderer(SPBlockEntityTypes.SIMULATED_PISTON_LINK.get(), SimulatedPistonLinkRenderer::new);
     }
 }
