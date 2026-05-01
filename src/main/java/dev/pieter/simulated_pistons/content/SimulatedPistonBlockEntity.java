@@ -6,8 +6,8 @@ import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
-import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 import dev.ryanhcode.sable.api.physics.constraint.free.FreeConstraintConfiguration;
+import dev.ryanhcode.sable.api.physics.constraint.free.FreeConstraintHandle;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.Pose3d;
@@ -70,7 +70,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private boolean assemblySuppressedUntilStopped;
     private float assemblySuppressedSpeed;
     @Nullable
-    private PhysicsConstraintHandle pistonConstraint;
+    private FreeConstraintHandle pistonConstraint;
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
@@ -129,16 +129,13 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         }
 
         final boolean extensionChanged = this.extension != previousExtension;
-        final boolean motionChanged = this.isAttachmentAssembled() && this.extension != this.lastAppliedExtension;
-        if (motionChanged) {
-            this.moveAssembledSubLevel();
-        }
         if (this.isAttachmentAssembled()) {
             this.ensurePistonConstraint();
             this.updatePistonConstraintMotor();
+            this.lastAppliedExtension = this.extension;
         }
 
-        if (extensionChanged || motionChanged) {
+        if (extensionChanged) {
             this.setChanged();
             this.sendData();
         }
@@ -602,6 +599,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             final double target = index == pistonAxisIndex ? signedExtension : 0.0;
             this.pistonConstraint.setMotor(linearAxis, target, 100000.0, 2500.0, false, 0.0);
         }
+        this.pistonConstraint.setContactsEnabled(false);
     }
 
     private void removePistonConstraint() {
