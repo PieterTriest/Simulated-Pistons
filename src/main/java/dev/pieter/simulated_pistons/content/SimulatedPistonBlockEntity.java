@@ -120,6 +120,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.moveAssembledSubLevel();
         }
         if (this.isAttachmentAssembled()) {
+            this.ensurePistonConstraint();
             this.updatePistonConstraintMotor();
         }
 
@@ -510,6 +511,32 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
         this.pistonConstraint = pipeline.addConstraint(containing, attachedServerSubLevel, config);
         this.updatePistonConstraintMotor();
+    }
+
+    private void ensurePistonConstraint() {
+        if (this.pistonConstraint != null && this.pistonConstraint.isValid()) {
+            return;
+        }
+
+        this.pistonConstraint = null;
+        if (this.level == null || this.level.isClientSide || this.subLevelId == null) {
+            return;
+        }
+
+        final BlockState state = this.getBlockState();
+        if (!(state.getBlock() instanceof SimulatedPistonBlock)) {
+            return;
+        }
+
+        try {
+            final ServerSubLevelContainer container = SubLevelContainer.getContainer((ServerLevel) this.level);
+            final SubLevel subLevel = container.getSubLevel(this.subLevelId);
+            if (subLevel != null) {
+                this.attachPistonConstraint(subLevel, state.getValue(SimulatedPistonBlock.FACING));
+            }
+        } catch (final RuntimeException e) {
+            this.lastMotionStatus = e.getClass().getSimpleName();
+        }
     }
 
     private void updatePistonConstraintMotor() {
