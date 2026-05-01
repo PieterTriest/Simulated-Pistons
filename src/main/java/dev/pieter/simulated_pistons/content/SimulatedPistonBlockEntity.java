@@ -68,6 +68,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private boolean hasAssemblyPayload;
     private boolean assembleNextTick;
     private boolean toggleAssemblyNextTick;
+    private boolean assemblySuppressedUntilStopped;
+    private float assemblySuppressedSpeed;
     @Nullable
     private PhysicsConstraintHandle pistonConstraint;
 
@@ -90,17 +92,30 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
         final float actuatorSpeed = this.getActuatorSpeed();
         this.lastActuatorSpeed = actuatorSpeed;
+        this.updateAssemblySuppression(actuatorSpeed);
+
         final boolean toggledAssembly = this.toggleAssemblyNextTick;
         if (this.toggleAssemblyNextTick) {
             this.toggleAssemblyNextTick = false;
             if (this.isAttachmentAssembled()) {
                 this.disassembleAttachment();
+                if (actuatorSpeed != 0) {
+                    this.assemblySuppressedUntilStopped = true;
+                    this.assemblySuppressedSpeed = actuatorSpeed;
+                    this.assembleNextTick = false;
+                    this.setChanged();
+                    this.sendData();
+                }
             } else {
+                this.assemblySuppressedUntilStopped = false;
+                this.assemblySuppressedSpeed = 0;
                 this.assembleAttachment();
             }
         }
 
-        if ((this.assembleNextTick || (!toggledAssembly && actuatorSpeed != 0)) && !this.isAttachmentAssembled()) {
+        if (!this.assemblySuppressedUntilStopped
+                && (this.assembleNextTick || (!toggledAssembly && actuatorSpeed != 0))
+                && !this.isAttachmentAssembled()) {
             this.assembleAttachment();
         }
         this.assembleNextTick = false;
@@ -128,6 +143,21 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.setChanged();
             this.sendData();
         }
+    }
+
+    private void updateAssemblySuppression(final float actuatorSpeed) {
+        if (!this.assemblySuppressedUntilStopped) {
+            return;
+        }
+
+        if (actuatorSpeed != 0 && actuatorSpeed == this.assemblySuppressedSpeed) {
+            return;
+        }
+
+        this.assemblySuppressedUntilStopped = false;
+        this.assemblySuppressedSpeed = 0;
+        this.setChanged();
+        this.sendData();
     }
 
     public void setChainLength(final int chainLength) {
@@ -239,7 +269,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     }
 
     private void requestAssemblyNextTick() {
-        if (this.isControllerSegment()) {
+        this.updateAssemblySuppression(this.getActuatorSpeed());
+        if (this.isControllerSegment() && !this.assemblySuppressedUntilStopped) {
             this.assembleNextTick = true;
             this.setChanged();
         }
@@ -715,6 +746,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         tag.putString("LastAssemblyStatus", this.lastAssemblyStatus);
         tag.putString("LastMotionStatus", this.lastMotionStatus);
         tag.putBoolean("HasAssemblyPayload", this.hasAssemblyPayload);
+        tag.putBoolean("AssemblySuppressedUntilStopped", this.assemblySuppressedUntilStopped);
+        tag.putFloat("AssemblySuppressedSpeed", this.assemblySuppressedSpeed);
         tag.putDouble("BaseSubLevelX", this.baseSubLevelX);
         tag.putDouble("BaseSubLevelY", this.baseSubLevelY);
         tag.putDouble("BaseSubLevelZ", this.baseSubLevelZ);
@@ -741,6 +774,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.lastAssemblyStatus = tag.getString("LastAssemblyStatus");
         this.lastMotionStatus = tag.getString("LastMotionStatus");
         this.hasAssemblyPayload = tag.contains("HasAssemblyPayload") ? tag.getBoolean("HasAssemblyPayload") : tag.hasUUID("SubLevelID");
+        this.assemblySuppressedUntilStopped = tag.getBoolean("AssemblySuppressedUntilStopped");
+        this.assemblySuppressedSpeed = tag.getFloat("AssemblySuppressedSpeed");
         this.baseSubLevelX = tag.getDouble("BaseSubLevelX");
         this.baseSubLevelY = tag.getDouble("BaseSubLevelY");
         this.baseSubLevelZ = tag.getDouble("BaseSubLevelZ");
