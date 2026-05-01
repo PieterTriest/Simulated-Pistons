@@ -57,6 +57,10 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
+        if (!state.getValue(SEGMENT).hasController()) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+
         if (!level.isClientSide) {
             this.withBlockEntityDo(level, pos, SimulatedPistonBlockEntity::resetExtension);
         }
@@ -233,6 +237,10 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
 
         boolean hasAttachmentFace() {
             return this == SINGLE || this == HEAD;
+        }
+
+        boolean hasController() {
+            return this == SINGLE || this == CONTROLLER;
         }
 
         @Override

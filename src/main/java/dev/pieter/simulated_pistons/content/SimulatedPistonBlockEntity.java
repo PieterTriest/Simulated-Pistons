@@ -66,6 +66,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private double baseSubLevelZ;
     private float lastAppliedExtension;
     private boolean hasAssemblyPayload;
+    private boolean assembleNextTick;
+    private boolean toggleAssemblyNextTick;
     @Nullable
     private PhysicsConstraintHandle pistonConstraint;
 
@@ -81,15 +83,27 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     @Override
     public void tick() {
         super.tick();
+        this.cogwheel.tick();
         if (this.level == null || this.level.isClientSide) {
             return;
         }
 
         final float actuatorSpeed = this.getActuatorSpeed();
         this.lastActuatorSpeed = actuatorSpeed;
-        if (actuatorSpeed != 0 && !this.isAttachmentAssembled()) {
+        final boolean toggledAssembly = this.toggleAssemblyNextTick;
+        if (this.toggleAssemblyNextTick) {
+            this.toggleAssemblyNextTick = false;
+            if (this.isAttachmentAssembled()) {
+                this.disassembleAttachment();
+            } else {
+                this.assembleAttachment();
+            }
+        }
+
+        if ((this.assembleNextTick || (!toggledAssembly && actuatorSpeed != 0)) && !this.isAttachmentAssembled()) {
             this.assembleAttachment();
         }
+        this.assembleNextTick = false;
 
         final float movementSpeed = this.getMovementSpeed(actuatorSpeed);
         this.lastMovementSpeed = movementSpeed;
@@ -135,12 +149,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     }
 
     public void resetExtension() {
-        if (this.isAttachmentAssembled()) {
-            this.disassembleAttachment();
-            return;
+        if (this.isControllerSegment()) {
+            this.toggleAssemblyNextTick = true;
+            this.setChanged();
         }
-
-        this.assembleAttachment();
     }
 
     private void resetExtensionOnly() {
@@ -215,6 +227,23 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         return this.subLevelId != null;
     }
 
+    private boolean isControllerSegment() {
+        final BlockState state = this.getBlockState();
+        return state.getBlock() instanceof SimulatedPistonBlock
+                && isControllerSegment(state.getValue(SimulatedPistonBlock.SEGMENT));
+    }
+
+    private static boolean isControllerSegment(final SimulatedPistonBlock.Segment segment) {
+        return segment == SimulatedPistonBlock.Segment.SINGLE || segment == SimulatedPistonBlock.Segment.CONTROLLER;
+    }
+
+    private void requestAssemblyNextTick() {
+        if (this.isControllerSegment()) {
+            this.assembleNextTick = true;
+            this.setChanged();
+        }
+    }
+
     @Override
     public void invalidate() {
         super.invalidate();
@@ -222,7 +251,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     }
 
     public void assembleAttachment() {
-        if (this.level == null || this.level.isClientSide || this.isAttachmentAssembled()) {
+        if (this.level == null || this.level.isClientSide || this.isAttachmentAssembled() || !this.isControllerSegment()) {
             return;
         }
 
@@ -725,7 +754,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             super.onSpeedChanged(previousSpeed);
 
             if (this.speed != 0 && !this.parent.isAttachmentAssembled()) {
-                this.parent.assembleAttachment();
+                this.parent.requestAssemblyNextTick();
             }
         }
 
