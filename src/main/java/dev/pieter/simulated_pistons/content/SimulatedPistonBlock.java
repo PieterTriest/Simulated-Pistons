@@ -17,27 +17,33 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonBlockEntity>, IRotate, ExtraKinetics.ExtraKineticsBlock {
     public static final EnumProperty<Segment> SEGMENT = EnumProperty.create("segment", Segment.class);
+    public static final BooleanProperty ASSEMBLED = BooleanProperty.create("assembled");
 
     public SimulatedPistonBlock(final Properties properties) {
         super(properties);
-        this.registerDefaultState(this.defaultBlockState().setValue(SEGMENT, Segment.SINGLE));
+        this.registerDefaultState(this.defaultBlockState().setValue(SEGMENT, Segment.SINGLE).setValue(ASSEMBLED, false));
     }
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        super.createBlockStateDefinition(builder.add(SEGMENT));
+        super.createBlockStateDefinition(builder.add(SEGMENT, ASSEMBLED));
     }
 
     @Override
@@ -103,6 +109,16 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     }
 
     @Override
+    protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos, final CollisionContext context) {
+        return assembledHeadNeedsRecess(state) ? recessedShape(state.getValue(FACING)) : super.getShape(state, level, pos, context);
+    }
+
+    @Override
+    protected VoxelShape getCollisionShape(final BlockState state, final BlockGetter level, final BlockPos pos, final CollisionContext context) {
+        return assembledHeadNeedsRecess(state) ? recessedShape(state.getValue(FACING)) : super.getCollisionShape(state, level, pos, context);
+    }
+
+    @Override
     public Class<SimulatedPistonBlockEntity> getBlockEntityClass() {
         return SimulatedPistonBlockEntity.class;
     }
@@ -138,8 +154,10 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
         for (int index = 0; index < length; index++) {
             final Segment segment = Segment.forIndex(index, length);
             final BlockState state = level.getBlockState(cursor);
-            if (state.getValue(SEGMENT) != segment) {
-                level.setBlock(cursor, state.setValue(SEGMENT, segment), Block.UPDATE_ALL);
+            final boolean keepAssembled = state.getValue(ASSEMBLED) && segment.hasAttachmentFace();
+            final BlockState updated = state.setValue(SEGMENT, segment).setValue(ASSEMBLED, keepAssembled);
+            if (state != updated) {
+                level.setBlock(cursor, updated, Block.UPDATE_ALL);
             }
             if (level.getBlockEntity(cursor) instanceof SimulatedPistonBlockEntity be) {
                 be.setChainLength(length);
@@ -150,6 +168,22 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
 
     private static boolean isAlignedPiston(final BlockState state, final Direction facing) {
         return state.getBlock() instanceof SimulatedPistonBlock && state.getValue(FACING) == facing;
+    }
+
+    private static boolean assembledHeadNeedsRecess(final BlockState state) {
+        return state.getValue(ASSEMBLED) && state.getValue(SEGMENT).hasAttachmentFace();
+    }
+
+    private static VoxelShape recessedShape(final Direction facing) {
+        final double inset = 12 / 16.0;
+        return switch (facing) {
+            case UP -> Shapes.box(0, 0, 0, 1, inset, 1);
+            case DOWN -> Shapes.box(0, 1 - inset, 0, 1, 1, 1);
+            case NORTH -> Shapes.box(0, 0, 1 - inset, 1, 1, 1);
+            case SOUTH -> Shapes.box(0, 0, 0, 1, 1, inset);
+            case WEST -> Shapes.box(1 - inset, 0, 0, 1, 1, 1);
+            case EAST -> Shapes.box(0, 0, 0, inset, 1, 1);
+        };
     }
 
     public enum Segment implements StringRepresentable {
@@ -175,6 +209,10 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
                 return HEAD;
             }
             return MIDDLE;
+        }
+
+        boolean hasAttachmentFace() {
+            return this == SINGLE || this == HEAD;
         }
 
         @Override

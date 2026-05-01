@@ -7,9 +7,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonLinkBlockEntity> {
     public SimulatedPistonLinkBlock(final Properties properties) {
@@ -37,7 +41,37 @@ public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements
     }
 
     @Override
+    protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos, final CollisionContext context) {
+        return plateShape(state.getValue(FACING), false);
+    }
+
+    @Override
+    protected VoxelShape getCollisionShape(final BlockState state, final BlockGetter level, final BlockPos pos, final CollisionContext context) {
+        return plateShape(state.getValue(FACING), true);
+    }
+
+    @Override
+    protected VoxelShape getBlockSupportShape(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        return plateShape(state.getValue(FACING), false);
+    }
+
+    @Override
     public ItemStack getCloneItemStack(final LevelReader level, final BlockPos pos, final BlockState state) {
         return new ItemStack(Items.AIR);
+    }
+
+    private static VoxelShape plateShape(final Direction facing, final boolean collision) {
+        final double min = collision ? 3 / 16.0 : 0;
+        final double max = collision ? 13 / 16.0 : 1;
+        final double low = collision ? 12 / 16.0 : 12.1 / 16.0;
+
+        return switch (facing) {
+            case UP -> Shapes.box(min, low, min, max, 1, max);
+            case DOWN -> Shapes.box(min, 0, min, max, 1 - low, max);
+            case NORTH -> Shapes.box(min, min, 0, max, max, 1 - low);
+            case SOUTH -> Shapes.box(min, min, low, max, max, 1);
+            case WEST -> Shapes.box(0, min, min, 1 - low, max, max);
+            case EAST -> Shapes.box(low, min, min, 1, max, max);
+        };
     }
 }

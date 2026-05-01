@@ -1,8 +1,21 @@
 {
-  "parent": "minecraft:block/cube_column",
+  "parent": "minecraft:block/block",
   "textures": {
     "end": "minecraft:block/polished_andesite",
-    "side": "minecraft:block/iron_block",
     "particle": "minecraft:block/iron_block"
-  }
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 12, 16],
+      "faces": {
+        "north": { "texture": "#particle", "uv": [0, 4, 16, 16] },
+        "east": { "texture": "#particle", "uv": [0, 4, 16, 16] },
+        "south": { "texture": "#particle", "uv": [0, 4, 16, 16] },
+        "west": { "texture": "#particle", "uv": [0, 4, 16, 16] },
+        "up": { "texture": "#particle", "uv": [0, 0, 16, 16] },
+        "down": { "texture": "#end", "uv": [0, 0, 16, 16] }
+      }
+    }
+  ]
 }

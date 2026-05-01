@@ -253,6 +253,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.subLevelAnchor = toAssemble.offset(offset);
             this.disassemblyGoal = toAssemble;
             this.linkPos = headPos.offset(offset);
+            this.setHeadAssembled(facing, true);
             this.placeLinkBlock(facing);
             this.captureBaseSubLevelPosition(subLevel);
             if (subLevel instanceof final SubLevel attached) {
@@ -308,6 +309,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.subLevelAnchor = null;
             this.disassemblyGoal = null;
             this.linkPos = null;
+            this.setHeadAssembled(this.getBlockState().getValue(SimulatedPistonBlock.FACING), false);
             this.lastAppliedExtension = 0;
             this.lastAssemblyStatus = "disassembled";
             this.lastMotionStatus = "idle";
@@ -334,6 +336,18 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.level.setBlockAndUpdate(this.linkPos, SPBlocks.SIMULATED_PISTON_LINK.get().defaultBlockState().setValue(SimulatedPistonLinkBlock.FACING, facing));
         if (this.level.getBlockEntity(this.linkPos) instanceof final SimulatedPistonLinkBlockEntity link) {
             link.setParent(this);
+        }
+    }
+
+    private void setHeadAssembled(final Direction facing, final boolean assembled) {
+        if (this.level == null) {
+            return;
+        }
+
+        final BlockPos headPos = this.worldPosition.relative(facing, Math.max(0, this.chainLength - 1));
+        final BlockState headState = this.level.getBlockState(headPos);
+        if (headState.getBlock() instanceof SimulatedPistonBlock && headState.getValue(SimulatedPistonBlock.SEGMENT).hasAttachmentFace()) {
+            this.level.setBlockAndUpdate(headPos, headState.setValue(SimulatedPistonBlock.ASSEMBLED, assembled));
         }
     }
 
