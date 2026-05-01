@@ -37,6 +37,11 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     @Nullable
     private BlockPos disassemblyGoal;
     private String lastAssemblyStatus = "idle";
+    private String lastMotionStatus = "idle";
+    private double baseSubLevelX;
+    private double baseSubLevelY;
+    private double baseSubLevelZ;
+    private float lastAppliedExtension;
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
@@ -60,18 +65,21 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.lastMovementSpeed = movementSpeed;
         this.lastTargetExtension = movementSpeed > 0 ? this.chainLength : 0;
 
-        if (movementSpeed == 0) {
-            return;
-        }
-
         final float previousExtension = this.extension;
-        this.extension = Mth.clamp(this.extension + movementSpeed, 0, this.chainLength);
-        if (this.extension == previousExtension) {
-            return;
+        if (movementSpeed != 0) {
+            this.extension = Mth.clamp(this.extension + movementSpeed, 0, this.chainLength);
         }
 
-        this.setChanged();
-        this.sendData();
+        final boolean extensionChanged = this.extension != previousExtension;
+        final boolean motionChanged = this.isAttachmentAssembled() && this.extension != this.lastAppliedExtension;
+        if (motionChanged) {
+            this.moveAssembledSubLevel();
+        }
+
+        if (extensionChanged || motionChanged) {
+            this.setChanged();
+            this.sendData();
+        }
     }
 
     public void setChainLength(final int chainLength) {
@@ -212,7 +220,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.subLevelId = (UUID) subLevel.getClass().getMethod("getUniqueId").invoke(subLevel);
             this.subLevelAnchor = toAssemble.offset(offset);
             this.disassemblyGoal = toAssemble;
+            this.captureBaseSubLevelPosition(subLevel);
+            this.lastAppliedExtension = this.extension;
             this.lastAssemblyStatus = "assembled";
+            this.lastMotionStatus = "assembled";
             this.setChanged();
             this.sendData();
         } catch (final ReflectiveOperationException e) {
@@ -233,10 +244,11 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             final Object container = containerClass
                     .getMethod("getContainer", net.minecraft.world.level.Level.class)
                     .invoke(null, this.level);
-            final Object subLevel = container
-                    .getClass()
-                    .getMethod("getSubLevel", UUID.class)
-                    .invoke(container, this.subLevelId);
+
+            this.extension = 0;
+            this.moveAssembledSubLevel();
+
+            final Object subLevel = this.getSubLevel(container);
 
             if (subLevel != null) {
                 final Class<?> helperClass = Class.forName("dev.simulated_team.simulated.util.SimAssemblyHelper");
@@ -257,13 +269,98 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.subLevelId = null;
             this.subLevelAnchor = null;
             this.disassemblyGoal = null;
+            this.lastAppliedExtension = 0;
             this.lastAssemblyStatus = "disassembled";
+            this.lastMotionStatus = "idle";
             this.resetExtensionOnly();
         } catch (final ReflectiveOperationException e) {
             this.lastAssemblyStatus = e.getClass().getSimpleName();
             this.setChanged();
             this.sendData();
         }
+    }
+
+    private void captureBaseSubLevelPosition(final Object subLevel) throws ReflectiveOperationException {
+        final Object position = this.getSubLevelPosition(subLevel);
+        this.baseSubLevelX = this.readDouble(position, "x");
+        this.baseSubLevelY = this.readDouble(position, "y");
+        this.baseSubLevelZ = this.readDouble(position, "z");
+    }
+
+    private void moveAssembledSubLevel() {
+        if (this.level == null || this.level.isClientSide || this.subLevelId == null) {
+            return;
+        }
+
+        final BlockState state = this.getBlockState();
+        if (!(state.getBlock() instanceof SimulatedPistonBlock)) {
+            return;
+        }
+
+        try {
+            final Class<?> containerClass = Class.forName("dev.ryanhcode.sable.api.sublevel.SubLevelContainer");
+            final Object container = containerClass
+                    .getMethod("getContainer", net.minecraft.world.level.Level.class)
+                    .invoke(null, this.level);
+            final Object subLevel = this.getSubLevel(container);
+            if (subLevel == null) {
+                this.lastMotionStatus = "missing_sublevel";
+                return;
+            }
+
+            final Direction facing = state.getValue(SimulatedPistonBlock.FACING);
+            final double x = this.baseSubLevelX + facing.getStepX() * this.extension;
+            final double y = this.baseSubLevelY + facing.getStepY() * this.extension;
+            final double z = this.baseSubLevelZ + facing.getStepZ() * this.extension;
+            final Object pose = subLevel.getClass().getMethod("logicalPose").invoke(subLevel);
+            final Object position = pose.getClass().getMethod("position").invoke(pose);
+            position.getClass().getMethod("set", double.class, double.class, double.class).invoke(position, x, y, z);
+
+            this.teleportSubLevel(container, subLevel, pose, position);
+            subLevel.getClass().getMethod("updateLastPose").invoke(subLevel);
+
+            this.lastAppliedExtension = this.extension;
+            this.lastMotionStatus = "moved";
+        } catch (final ReflectiveOperationException e) {
+            this.lastMotionStatus = e.getClass().getSimpleName();
+        }
+    }
+
+    private Object getSubLevel(final Object container) throws ReflectiveOperationException {
+        if (this.subLevelId == null) {
+            return null;
+        }
+
+        return container
+                .getClass()
+                .getMethod("getSubLevel", UUID.class)
+                .invoke(container, this.subLevelId);
+    }
+
+    private Object getSubLevelPosition(final Object subLevel) throws ReflectiveOperationException {
+        final Object pose = subLevel.getClass().getMethod("logicalPose").invoke(subLevel);
+        return pose.getClass().getMethod("position").invoke(pose);
+    }
+
+    private double readDouble(final Object source, final String methodName) throws ReflectiveOperationException {
+        return ((Number) source.getClass().getMethod(methodName).invoke(source)).doubleValue();
+    }
+
+    private void teleportSubLevel(final Object container, final Object subLevel, final Object pose, final Object position) throws ReflectiveOperationException {
+        final Object physicsSystem = container.getClass().getMethod("physicsSystem").invoke(container);
+        final Object pipeline = physicsSystem.getClass().getMethod("getPipeline").invoke(physicsSystem);
+        final Object orientation = pose.getClass().getMethod("orientation").invoke(pose);
+
+        for (final Method method : pipeline.getClass().getMethods()) {
+            if (!"teleport".equals(method.getName()) || method.getParameterCount() != 3) {
+                continue;
+            }
+
+            method.invoke(pipeline, subLevel, position, orientation);
+            return;
+        }
+
+        throw new NoSuchMethodException("teleport");
     }
 
     @Override
@@ -280,6 +377,11 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         tag.putFloat("LastMovementSpeed", this.lastMovementSpeed);
         tag.putFloat("LastTargetExtension", this.lastTargetExtension);
         tag.putString("LastAssemblyStatus", this.lastAssemblyStatus);
+        tag.putString("LastMotionStatus", this.lastMotionStatus);
+        tag.putDouble("BaseSubLevelX", this.baseSubLevelX);
+        tag.putDouble("BaseSubLevelY", this.baseSubLevelY);
+        tag.putDouble("BaseSubLevelZ", this.baseSubLevelZ);
+        tag.putFloat("LastAppliedExtension", this.lastAppliedExtension);
         if (this.subLevelId != null) {
             tag.putUUID("SubLevelID", this.subLevelId);
         }
@@ -297,6 +399,11 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.chainLength = Math.max(1, tag.getInt("ChainLength"));
         this.extension = Math.min(tag.getFloat("Extension"), this.chainLength);
         this.lastAssemblyStatus = tag.getString("LastAssemblyStatus");
+        this.lastMotionStatus = tag.getString("LastMotionStatus");
+        this.baseSubLevelX = tag.getDouble("BaseSubLevelX");
+        this.baseSubLevelY = tag.getDouble("BaseSubLevelY");
+        this.baseSubLevelZ = tag.getDouble("BaseSubLevelZ");
+        this.lastAppliedExtension = tag.getFloat("LastAppliedExtension");
         this.subLevelId = tag.hasUUID("SubLevelID") ? tag.getUUID("SubLevelID") : null;
         this.subLevelAnchor = tag.contains("SubLevelAnchor") ? NbtUtils.readBlockPos(tag, "SubLevelAnchor").orElse(null) : null;
         this.disassemblyGoal = tag.contains("DisassemblyGoal") ? NbtUtils.readBlockPos(tag, "DisassemblyGoal").orElse(null) : null;
