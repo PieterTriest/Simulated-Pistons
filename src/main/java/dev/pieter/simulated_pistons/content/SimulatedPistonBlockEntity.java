@@ -4,14 +4,12 @@ import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import dev.ryanhcode.sable.Sable;
-import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
 import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 import dev.ryanhcode.sable.api.physics.constraint.free.FreeConstraintConfiguration;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import dev.ryanhcode.sable.companion.math.JOMLConversion;
 import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
@@ -34,6 +32,7 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -350,14 +349,28 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         return assemble.invoke(null, this.level, headPos, toAssemble, false, false);
     }
 
+    private Vec3 projectedCenter(final BlockPos pos) {
+        if (this.level == null) {
+            return Vec3.atCenterOf(pos);
+        }
+
+        return Sable.HELPER.projectOutOfSubLevel(this.level, Vec3.atCenterOf(pos));
+    }
+
     private void assembleEmpty(final Direction facing, final BlockPos headPos, final BlockPos toAssemble) {
         if (!(this.level instanceof final ServerLevel serverLevel)) {
             return;
         }
 
         final ServerSubLevelContainer container = SubLevelContainer.getContainer(serverLevel);
+        final Vec3 projectedHeadCenter = this.projectedCenter(headPos);
+        final Vector3d projectedHeadLowerCorner = new Vector3d(
+                projectedHeadCenter.x - .5,
+                projectedHeadCenter.y - .5,
+                projectedHeadCenter.z - .5
+        );
         final Pose3d pose = new Pose3d();
-        pose.position().set(headPos.getX() + .5, headPos.getY() + .5, headPos.getZ() + .5);
+        pose.position().set(projectedHeadCenter.x, projectedHeadCenter.y, projectedHeadCenter.z);
 
         final ServerSubLevel subLevel = (ServerSubLevel) container.allocateNewSubLevel(pose);
         final LevelPlot plot = subLevel.getPlot();
@@ -371,7 +384,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
         final BlockPos plotAnchor = plot.getCenterBlock();
         final Vector3dc centerOfMass = subLevel.getMassTracker().getCenterOfMass();
-        final Vector3d subLevelPosition = JOMLConversion.atLowerCornerOf(headPos);
+        final Vector3d subLevelPosition = new Vector3d(projectedHeadLowerCorner);
         if (centerOfMass != null) {
             subLevelPosition.add(centerOfMass.x() - plotAnchor.getX(), centerOfMass.y() - plotAnchor.getY(), centerOfMass.z() - plotAnchor.getZ());
         } else {
@@ -388,11 +401,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.setHeadAssembled(facing, true);
         this.captureEmptyBasePosition(subLevel);
 
-        final SubLevel containingSubLevel = Sable.HELPER.getContaining(this);
         final PhysicsPipeline pipeline = container.physicsSystem().getPipeline();
-        if (containingSubLevel instanceof final ServerSubLevel containing) {
-            SubLevelAssemblyHelper.kickFromContainingSubLevel(serverLevel, container.physicsSystem(), pipeline, subLevel, containing);
-        }
         pipeline.teleport(subLevel, subLevel.logicalPose().position(), subLevel.logicalPose().orientation());
         subLevel.updateLastPose();
 
