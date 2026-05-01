@@ -32,8 +32,27 @@ public class SimulatedPistonRenderer extends KineticBlockEntityRenderer<Simulate
             renderRotatingBuffer(be, CachedBuffers.partialFacing(SPPartialModels.SHAFT_SIXTEENTH, state, facing.getOpposite()), ms, vb, light);
         }
 
+        if (be.isAttachmentAssembled() && (segment == SimulatedPistonBlock.Segment.SINGLE || segment == SimulatedPistonBlock.Segment.CONTROLLER)) {
+            this.renderAssembledShaft(be, state, facing, ms, vb, light);
+        }
+
         if (!state.getValue(SimulatedPistonBlock.ASSEMBLED) && (segment == SimulatedPistonBlock.Segment.SINGLE || segment == SimulatedPistonBlock.Segment.HEAD)) {
             renderRotatingBuffer(be, CachedBuffers.partialFacing(SPPartialModels.SHAFT_SIXTEENTH, state, facing), ms, vb, light);
+        }
+    }
+
+    private void renderAssembledShaft(final SimulatedPistonBlockEntity be, final BlockState state, final Direction facing, final PoseStack ms, final VertexConsumer vb, final int light) {
+        final int chainLength = be.getChainLength();
+        final float extension = be.getExtension();
+
+        for (int segmentIndex = 0; segmentIndex < chainLength; segmentIndex++) {
+            final float offset = extension + segmentIndex;
+            ms.pushPose();
+            ms.translate(facing.getStepX() * offset, facing.getStepY() * offset, facing.getStepZ() * offset);
+            CachedBuffers.partialFacing(SPPartialModels.PISTON_SHAFT_SEGMENT, state, facing)
+                    .light(light)
+                    .renderInto(ms, vb);
+            ms.popPose();
         }
     }
 }
