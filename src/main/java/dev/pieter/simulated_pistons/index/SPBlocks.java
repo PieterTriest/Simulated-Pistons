@@ -2,6 +2,7 @@ package dev.pieter.simulated_pistons.index;
 
 import dev.pieter.simulated_pistons.SimulatedPistons;
 import dev.pieter.simulated_pistons.content.SimulatedPistonBlock;
+import dev.pieter.simulated_pistons.content.SimulatedPistonLinkBlock;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -21,6 +22,16 @@ public class SPBlocks {
     public static final DeferredBlock<SimulatedPistonBlock> SIMULATED_PISTON = BLOCKS.registerBlock(
             "simulated_piston",
             SimulatedPistonBlock::new,
+            BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(5f, 6f)
+                    .sound(SoundType.NETHERITE_BLOCK)
+                    .noOcclusion()
+    );
+
+    public static final DeferredBlock<SimulatedPistonLinkBlock> SIMULATED_PISTON_LINK = BLOCKS.registerBlock(
+            "simulated_piston_link",
+            SimulatedPistonLinkBlock::new,
             BlockBehaviour.Properties.of()
                     .mapColor(MapColor.METAL)
                     .strength(5f, 6f)

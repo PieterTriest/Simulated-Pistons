@@ -3,7 +3,17 @@ package dev.pieter.simulated_pistons.content;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
+import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
+import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
+import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
+import dev.ryanhcode.sable.api.physics.constraint.free.FreeConstraintConfiguration;
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
+import dev.pieter.simulated_pistons.index.SPBlocks;
 import dev.simulated_team.simulated.util.extra_kinetics.ExtraBlockPos;
 import dev.simulated_team.simulated.util.extra_kinetics.ExtraKinetics;
 import net.minecraft.core.BlockPos;
@@ -12,6 +22,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Rotation;
@@ -21,7 +32,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.UUID;
+
+import org.joml.Quaterniond;
+import org.joml.Vector3d;
 
 public class SimulatedPistonBlockEntity extends KineticBlockEntity implements ExtraKinetics {
     private final PistonCogBlockEntity cogwheel;
@@ -36,12 +51,16 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private BlockPos subLevelAnchor;
     @Nullable
     private BlockPos disassemblyGoal;
+    @Nullable
+    private BlockPos linkPos;
     private String lastAssemblyStatus = "idle";
     private String lastMotionStatus = "idle";
     private double baseSubLevelX;
     private double baseSubLevelY;
     private double baseSubLevelZ;
     private float lastAppliedExtension;
+    @Nullable
+    private PhysicsConstraintHandle pistonConstraint;
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
@@ -61,6 +80,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
         final float actuatorSpeed = this.getActuatorSpeed();
         this.lastActuatorSpeed = actuatorSpeed;
+        if (actuatorSpeed != 0 && !this.isAttachmentAssembled()) {
+            this.assembleAttachment();
+        }
+
         final float movementSpeed = this.getMovementSpeed(actuatorSpeed);
         this.lastMovementSpeed = movementSpeed;
         this.lastTargetExtension = movementSpeed > 0 ? this.chainLength : 0;
@@ -74,6 +97,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         final boolean motionChanged = this.isAttachmentAssembled() && this.extension != this.lastAppliedExtension;
         if (motionChanged) {
             this.moveAssembledSubLevel();
+        }
+        if (this.isAttachmentAssembled()) {
+            this.updatePistonConstraintMotor();
         }
 
         if (extensionChanged || motionChanged) {
@@ -182,6 +208,12 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         return this.subLevelId != null;
     }
 
+    @Override
+    public void invalidate() {
+        super.invalidate();
+        this.removePistonConstraint();
+    }
+
     public void assembleAttachment() {
         if (this.level == null || this.level.isClientSide || this.isAttachmentAssembled()) {
             return;
@@ -220,7 +252,12 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.subLevelId = (UUID) subLevel.getClass().getMethod("getUniqueId").invoke(subLevel);
             this.subLevelAnchor = toAssemble.offset(offset);
             this.disassemblyGoal = toAssemble;
+            this.linkPos = headPos.offset(offset);
+            this.placeLinkBlock(facing);
             this.captureBaseSubLevelPosition(subLevel);
+            if (subLevel instanceof final SubLevel attached) {
+                this.attachPistonConstraint(attached, facing);
+            }
             this.lastAppliedExtension = this.extension;
             this.lastAssemblyStatus = "assembled";
             this.lastMotionStatus = "assembled";
@@ -247,6 +284,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
             this.extension = 0;
             this.moveAssembledSubLevel();
+            this.removePistonConstraint();
 
             final Object subLevel = this.getSubLevel(container);
 
@@ -269,6 +307,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.subLevelId = null;
             this.subLevelAnchor = null;
             this.disassemblyGoal = null;
+            this.linkPos = null;
             this.lastAppliedExtension = 0;
             this.lastAssemblyStatus = "disassembled";
             this.lastMotionStatus = "idle";
@@ -285,6 +324,71 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.baseSubLevelX = this.readDouble(position, "x");
         this.baseSubLevelY = this.readDouble(position, "y");
         this.baseSubLevelZ = this.readDouble(position, "z");
+    }
+
+    private void placeLinkBlock(final Direction facing) {
+        if (this.level == null || this.linkPos == null) {
+            return;
+        }
+
+        this.level.setBlockAndUpdate(this.linkPos, SPBlocks.SIMULATED_PISTON_LINK.get().defaultBlockState().setValue(SimulatedPistonLinkBlock.FACING, facing));
+        if (this.level.getBlockEntity(this.linkPos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.setParent(this);
+        }
+    }
+
+    private void attachPistonConstraint(final SubLevel attached, final Direction facing) {
+        if (!(this.level instanceof ServerLevel serverLevel) || !(attached instanceof ServerSubLevel attachedServerSubLevel)) {
+            return;
+        }
+
+        this.removePistonConstraint();
+
+        final ServerSubLevelContainer container = SubLevelContainer.getContainer(serverLevel);
+        final PhysicsPipeline pipeline = container.physicsSystem().getPipeline();
+        final ServerSubLevel containing = (ServerSubLevel) Sable.HELPER.getContaining(this);
+        final BlockPos headPos = this.worldPosition.relative(facing, this.chainLength);
+        final BlockPos attachmentPos = this.linkPos != null ? this.linkPos.relative(facing) : headPos;
+        final FreeConstraintConfiguration config = new FreeConstraintConfiguration(
+                new Vector3d(headPos.getX() + .5, headPos.getY() + .5, headPos.getZ() + .5),
+                new Vector3d(attachmentPos.getX() + .5, attachmentPos.getY() + .5, attachmentPos.getZ() + .5),
+                new Quaterniond()
+        );
+
+        this.pistonConstraint = pipeline.addConstraint(containing, attachedServerSubLevel, config);
+        this.updatePistonConstraintMotor();
+    }
+
+    private void updatePistonConstraintMotor() {
+        if (this.pistonConstraint == null) {
+            return;
+        }
+
+        if (!this.pistonConstraint.isValid()) {
+            this.pistonConstraint = null;
+            return;
+        }
+
+        final Direction facing = this.getBlockState().getValue(SimulatedPistonBlock.FACING);
+        final int pistonAxisIndex = facing.getAxis().ordinal();
+        final double signedExtension = this.extension * facing.getAxisDirection().getStep();
+
+        for (final ConstraintJointAxis angularAxis : ConstraintJointAxis.ANGULAR) {
+            this.pistonConstraint.setMotor(angularAxis, 0.0, 100000.0, 2500.0, false, 0.0);
+        }
+
+        for (int index = 0; index < ConstraintJointAxis.LINEAR.length; index++) {
+            final ConstraintJointAxis linearAxis = ConstraintJointAxis.LINEAR[index];
+            final double target = index == pistonAxisIndex ? signedExtension : 0.0;
+            this.pistonConstraint.setMotor(linearAxis, target, 100000.0, 2500.0, false, 0.0);
+        }
+    }
+
+    private void removePistonConstraint() {
+        if (this.pistonConstraint != null) {
+            this.pistonConstraint.remove();
+            this.pistonConstraint = null;
+        }
     }
 
     private void moveAssembledSubLevel() {
@@ -364,6 +468,25 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     }
 
     @Override
+    public float propagateRotationTo(final KineticBlockEntity target, final BlockState stateFrom, final BlockState stateTo, final BlockPos diff, final boolean connectedViaAxes, final boolean connectedViaCogs) {
+        return this.linkPos != null && stateTo.getBlock() instanceof SimulatedPistonLinkBlock ? 1 : super.propagateRotationTo(target, stateFrom, stateTo, diff, connectedViaAxes, connectedViaCogs);
+    }
+
+    @Override
+    public boolean isCustomConnection(final KineticBlockEntity other, final BlockState state, final BlockState otherState) {
+        return this.linkPos != null && otherState.getBlock() instanceof SimulatedPistonLinkBlock;
+    }
+
+    @Override
+    public List<BlockPos> addPropagationLocations(final IRotate block, final BlockState state, final List<BlockPos> neighbours) {
+        if (this.linkPos != null) {
+            neighbours.add(this.linkPos);
+        }
+
+        return super.addPropagationLocations(block, state, neighbours);
+    }
+
+    @Override
     public float calculateStressApplied() {
         return 0;
     }
@@ -391,6 +514,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         if (this.disassemblyGoal != null) {
             tag.put("DisassemblyGoal", NbtUtils.writeBlockPos(this.disassemblyGoal));
         }
+        if (this.linkPos != null) {
+            tag.put("LinkPos", NbtUtils.writeBlockPos(this.linkPos));
+        }
     }
 
     @Override
@@ -407,6 +533,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.subLevelId = tag.hasUUID("SubLevelID") ? tag.getUUID("SubLevelID") : null;
         this.subLevelAnchor = tag.contains("SubLevelAnchor") ? NbtUtils.readBlockPos(tag, "SubLevelAnchor").orElse(null) : null;
         this.disassemblyGoal = tag.contains("DisassemblyGoal") ? NbtUtils.readBlockPos(tag, "DisassemblyGoal").orElse(null) : null;
+        this.linkPos = tag.contains("LinkPos") ? NbtUtils.readBlockPos(tag, "LinkPos").orElse(null) : null;
     }
 
     public static class PistonCogBlockEntity extends KineticBlockEntity implements ExtraKinetics.ExtraKineticsBlockEntity {
@@ -432,6 +559,15 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         @Override
         public KineticBlockEntity getParentBlockEntity() {
             return this.parent;
+        }
+
+        @Override
+        public void onSpeedChanged(final float previousSpeed) {
+            super.onSpeedChanged(previousSpeed);
+
+            if (this.speed != 0 && !this.parent.isAttachmentAssembled()) {
+                this.parent.assembleAttachment();
+            }
         }
 
         @Override

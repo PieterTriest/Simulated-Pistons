@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "simulated_pistons:block/simulated_piston_link" },
+    "facing=east": { "model": "simulated_pistons:block/simulated_piston_link", "y": 90 },
+    "facing=north": { "model": "simulated_pistons:block/simulated_piston_link" },
+    "facing=south": { "model": "simulated_pistons:block/simulated_piston_link", "y": 180 },
+    "facing=up": { "model": "simulated_pistons:block/simulated_piston_link" },
+    "facing=west": { "model": "simulated_pistons:block/simulated_piston_link", "y": 270 }
+  }
+}

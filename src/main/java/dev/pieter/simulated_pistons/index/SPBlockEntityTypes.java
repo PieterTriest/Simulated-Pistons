@@ -2,6 +2,7 @@ package dev.pieter.simulated_pistons.index;
 
 import dev.pieter.simulated_pistons.SimulatedPistons;
 import dev.pieter.simulated_pistons.content.SimulatedPistonBlockEntity;
+import dev.pieter.simulated_pistons.content.SimulatedPistonLinkBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -15,6 +16,11 @@ public class SPBlockEntityTypes {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SimulatedPistonBlockEntity>> SIMULATED_PISTON =
             BLOCK_ENTITY_TYPES.register("simulated_piston", () -> BlockEntityType.Builder
                     .of(SimulatedPistonBlockEntity::create, SPBlocks.SIMULATED_PISTON.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SimulatedPistonLinkBlockEntity>> SIMULATED_PISTON_LINK =
+            BLOCK_ENTITY_TYPES.register("simulated_piston_link", () -> BlockEntityType.Builder
+                    .of(SimulatedPistonLinkBlockEntity::create, SPBlocks.SIMULATED_PISTON_LINK.get())
                     .build(null));
 
     public static void register(final IEventBus modBus) {
