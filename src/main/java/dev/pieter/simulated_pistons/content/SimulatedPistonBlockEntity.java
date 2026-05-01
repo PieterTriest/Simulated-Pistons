@@ -4,14 +4,18 @@ import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
 import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 import dev.ryanhcode.sable.api.physics.constraint.free.FreeConstraintConfiguration;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.companion.math.JOMLConversion;
+import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import dev.ryanhcode.sable.sublevel.plot.LevelPlot;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import dev.pieter.simulated_pistons.index.SPBlocks;
 import dev.simulated_team.simulated.util.extra_kinetics.ExtraBlockPos;
@@ -24,6 +28,7 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -37,6 +42,7 @@ import java.util.UUID;
 
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
 public class SimulatedPistonBlockEntity extends KineticBlockEntity implements ExtraKinetics {
     private final PistonCogBlockEntity cogwheel;
@@ -231,43 +237,29 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         final boolean emptyFront = this.level.getBlockState(toAssemble).isAir();
 
         try {
-            if (emptyFront) {
-                this.placeTemporaryLinkBlock(toAssemble, facing);
-            }
+            final Object result = emptyFront ? null : this.assemblePayload(headPos, toAssemble);
 
-            final Class<?> helperClass = Class.forName("dev.simulated_team.simulated.util.SimAssemblyHelper");
-            final Method assemble = helperClass.getMethod(
-                    "assembleFromSingleBlock",
-                    net.minecraft.world.level.Level.class,
-                    BlockPos.class,
-                    BlockPos.class,
-                    boolean.class,
-                    boolean.class
-            );
-
-            final Object result = assemble.invoke(null, this.level, headPos, toAssemble, false, false);
             if (result == null) {
-                if (emptyFront) {
-                    this.level.removeBlock(toAssemble, false);
+                if (!emptyFront) {
+                    this.lastAssemblyStatus = "nothing_to_assemble";
+                    this.setChanged();
+                    this.sendData();
+                    return;
                 }
-                this.lastAssemblyStatus = "nothing_to_assemble";
-                this.setChanged();
-                this.sendData();
+
+                this.assembleEmpty(facing, headPos, toAssemble);
                 return;
             }
 
-            final Object subLevel = result.getClass().getMethod("subLevel").invoke(result);
+            final SubLevel subLevel = (SubLevel) result.getClass().getMethod("subLevel").invoke(result);
             final BlockPos offset = (BlockPos) result.getClass().getMethod("offset").invoke(result);
             this.subLevelId = (UUID) subLevel.getClass().getMethod("getUniqueId").invoke(subLevel);
             this.subLevelAnchor = toAssemble.offset(offset);
             this.disassemblyGoal = toAssemble;
+            this.hasAssemblyPayload = true;
             this.linkPos = headPos.offset(offset);
-            this.hasAssemblyPayload = !emptyFront;
-            if (emptyFront) {
-                this.removeTemporaryLinkBlock(toAssemble.offset(offset));
-            }
-            this.setHeadAssembled(facing, true);
             this.placeLinkBlock(facing);
+            this.setHeadAssembled(facing, true);
             this.captureBaseSubLevelPosition(subLevel);
             if (subLevel instanceof final SubLevel attached) {
                 this.attachPistonConstraint(attached, facing);
@@ -278,13 +270,80 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.setChanged();
             this.sendData();
         } catch (final ReflectiveOperationException e) {
-            if (emptyFront) {
-                this.level.removeBlock(toAssemble, false);
-            }
             this.lastAssemblyStatus = e.getClass().getSimpleName();
             this.setChanged();
             this.sendData();
         }
+    }
+
+    private Object assemblePayload(final BlockPos headPos, final BlockPos toAssemble) throws ReflectiveOperationException {
+        final Class<?> helperClass = Class.forName("dev.simulated_team.simulated.util.SimAssemblyHelper");
+        final Method assemble = helperClass.getMethod(
+                "assembleFromSingleBlock",
+                net.minecraft.world.level.Level.class,
+                BlockPos.class,
+                BlockPos.class,
+                boolean.class,
+                boolean.class
+        );
+        return assemble.invoke(null, this.level, headPos, toAssemble, false, false);
+    }
+
+    private void assembleEmpty(final Direction facing, final BlockPos headPos, final BlockPos toAssemble) {
+        if (!(this.level instanceof final ServerLevel serverLevel)) {
+            return;
+        }
+
+        final ServerSubLevelContainer container = SubLevelContainer.getContainer(serverLevel);
+        final Pose3d pose = new Pose3d();
+        pose.position().set(headPos.getX() + .5, headPos.getY() + .5, headPos.getZ() + .5);
+
+        final ServerSubLevel subLevel = (ServerSubLevel) container.allocateNewSubLevel(pose);
+        final LevelPlot plot = subLevel.getPlot();
+        final ChunkPos center = plot.getCenterChunk();
+        plot.newEmptyChunk(center);
+        plot.getEmbeddedLevelAccessor().setBlock(
+                BlockPos.ZERO,
+                SPBlocks.SIMULATED_PISTON_LINK.get().defaultBlockState().setValue(SimulatedPistonLinkBlock.FACING, facing),
+                3
+        );
+
+        final BlockPos plotAnchor = plot.getCenterBlock();
+        final Vector3dc centerOfMass = subLevel.getMassTracker().getCenterOfMass();
+        final Vector3d subLevelPosition = JOMLConversion.atLowerCornerOf(headPos);
+        if (centerOfMass != null) {
+            subLevelPosition.add(centerOfMass.x() - plotAnchor.getX(), centerOfMass.y() - plotAnchor.getY(), centerOfMass.z() - plotAnchor.getZ());
+        } else {
+            subLevel.logicalPose().rotationPoint().set(plotAnchor.getX() + .5, plotAnchor.getY() + .5, plotAnchor.getZ() + .5);
+        }
+        subLevel.logicalPose().position().set(subLevelPosition.x, subLevelPosition.y, subLevelPosition.z);
+
+        final BlockPos offset = plotAnchor.subtract(headPos);
+        this.subLevelId = subLevel.getUniqueId();
+        this.subLevelAnchor = toAssemble.offset(offset);
+        this.disassemblyGoal = toAssemble;
+        this.linkPos = headPos.offset(offset);
+        this.hasAssemblyPayload = false;
+        this.setHeadAssembled(facing, true);
+        this.captureEmptyBasePosition(subLevel);
+
+        final SubLevel containingSubLevel = Sable.HELPER.getContaining(this);
+        final PhysicsPipeline pipeline = container.physicsSystem().getPipeline();
+        if (containingSubLevel instanceof final ServerSubLevel containing) {
+            SubLevelAssemblyHelper.kickFromContainingSubLevel(serverLevel, container.physicsSystem(), pipeline, subLevel, containing);
+        }
+        pipeline.teleport(subLevel, subLevel.logicalPose().position(), subLevel.logicalPose().orientation());
+        subLevel.updateLastPose();
+
+        if (this.level.getBlockEntity(this.linkPos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.setParent(this);
+        }
+        this.attachPistonConstraint(subLevel, facing);
+        this.lastAppliedExtension = this.extension;
+        this.lastAssemblyStatus = "assembled";
+        this.lastMotionStatus = "assembled";
+        this.setChanged();
+        this.sendData();
     }
 
     public void disassembleAttachment() {
@@ -303,25 +362,25 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.moveAssembledSubLevel();
             this.removePistonConstraint();
 
-            final Object subLevel = this.getSubLevel(container);
-            this.removeLinkBlock();
+            final SubLevel subLevel = (SubLevel) this.getSubLevel(container);
 
-            if (subLevel != null && this.hasAssemblyPayload) {
-                final Class<?> helperClass = Class.forName("dev.simulated_team.simulated.util.SimAssemblyHelper");
-                final Class<?> subLevelClass = Class.forName("dev.ryanhcode.sable.sublevel.SubLevel");
-                helperClass
-                        .getMethod(
-                                "disassembleSubLevel",
-                                net.minecraft.world.level.Level.class,
-                                subLevelClass,
-                                BlockPos.class,
-                                BlockPos.class,
-                                Rotation.class,
-                                boolean.class
-                        )
-                        .invoke(null, this.level, subLevel, this.subLevelAnchor, this.disassemblyGoal, Rotation.NONE, true);
-            } else if (subLevel != null) {
-                this.removeSubLevel(container, subLevel);
+            if (subLevel != null) {
+                this.destroyLinkBlock();
+                if (!subLevel.isRemoved()) {
+                    final Class<?> helperClass = Class.forName("dev.simulated_team.simulated.util.SimAssemblyHelper");
+                    final Class<?> subLevelClass = Class.forName("dev.ryanhcode.sable.sublevel.SubLevel");
+                    helperClass
+                            .getMethod(
+                                    "disassembleSubLevel",
+                                    net.minecraft.world.level.Level.class,
+                                    subLevelClass,
+                                    BlockPos.class,
+                                    BlockPos.class,
+                                    Rotation.class,
+                                    boolean.class
+                            )
+                            .invoke(null, this.level, subLevel, this.subLevelAnchor, this.disassemblyGoal, Rotation.NONE, true);
+                }
             }
 
             this.subLevelId = null;
@@ -367,25 +426,20 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         }
     }
 
-    private void placeTemporaryLinkBlock(final BlockPos pos, final Direction facing) {
-        this.level.setBlockAndUpdate(pos, SPBlocks.SIMULATED_PISTON_LINK.get().defaultBlockState().setValue(SimulatedPistonLinkBlock.FACING, facing));
-        if (this.level.getBlockEntity(pos) instanceof final SimulatedPistonLinkBlockEntity link) {
-            link.beforeAssembly();
-        }
-    }
-
-    private void removeTemporaryLinkBlock(final BlockPos pos) {
-        if (this.level == null || pos.equals(this.linkPos)) {
+    private void destroyLinkBlock() {
+        if (this.level == null || this.linkPos == null) {
             return;
         }
 
-        if (this.level.getBlockEntity(pos) instanceof final SimulatedPistonLinkBlockEntity link) {
-            link.beforeCleanup();
+        if (!this.level.getBlockState(this.linkPos).is(SPBlocks.SIMULATED_PISTON_LINK.get())) {
+            return;
         }
-        this.level.removeBlock(pos, false);
+
+        this.prepareLinkForCleanup();
+        this.level.setBlock(this.linkPos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
     }
 
-    private void removeLinkBlock() {
+    private void prepareLinkForCleanup() {
         if (this.level == null || this.linkPos == null) {
             return;
         }
@@ -393,7 +447,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         if (this.level.getBlockEntity(this.linkPos) instanceof final SimulatedPistonLinkBlockEntity link) {
             link.beforeCleanup();
         }
-        this.level.removeBlock(this.linkPos, false);
     }
 
     private void setHeadAssembled(final Direction facing, final boolean assembled) {
@@ -460,6 +513,12 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.pistonConstraint.remove();
             this.pistonConstraint = null;
         }
+    }
+
+    private void captureEmptyBasePosition(final ServerSubLevel subLevel) {
+        this.baseSubLevelX = subLevel.logicalPose().position().x();
+        this.baseSubLevelY = subLevel.logicalPose().position().y();
+        this.baseSubLevelZ = subLevel.logicalPose().position().z();
     }
 
     private void moveAssembledSubLevel() {
