@@ -74,6 +74,10 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     @Override
     public void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState newState, final boolean movedByPiston) {
         final Direction facing = state.getValue(FACING);
+        if (!level.isClientSide && !state.is(newState.getBlock())) {
+            cleanupChainAssembly(level, pos, facing);
+        }
+
         super.onRemove(state, level, pos, newState, movedByPiston);
         if (!level.isClientSide && !state.is(newState.getBlock())) {
             updateChain(level, pos.relative(facing), facing);
@@ -161,6 +165,22 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
             }
             if (level.getBlockEntity(cursor) instanceof SimulatedPistonBlockEntity be) {
                 be.setChainLength(length);
+            }
+            cursor = cursor.relative(facing);
+        }
+    }
+
+    private static void cleanupChainAssembly(final Level level, final BlockPos origin, final Direction facing) {
+        BlockPos start = origin;
+        while (isAlignedPiston(level.getBlockState(start.relative(facing.getOpposite())), facing)) {
+            start = start.relative(facing.getOpposite());
+        }
+
+        BlockPos cursor = start;
+        while (isAlignedPiston(level.getBlockState(cursor), facing)) {
+            if (level.getBlockEntity(cursor) instanceof final SimulatedPistonBlockEntity be && be.isAttachmentAssembled()) {
+                be.cleanupAfterPistonRemoved();
+                return;
             }
             cursor = cursor.relative(facing);
         }

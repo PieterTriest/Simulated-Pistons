@@ -41,6 +41,10 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
         this.assembling = true;
     }
 
+    public void beforeCleanup() {
+        this.assembling = true;
+    }
+
     public void setParent(final SimulatedPistonBlockEntity parent) {
         final SubLevel parentSubLevel = Sable.HELPER.getContaining(parent);
         this.parent = parent.getBlockPos();

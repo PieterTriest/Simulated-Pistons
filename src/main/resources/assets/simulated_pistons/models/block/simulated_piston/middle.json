@@ -3,8 +3,8 @@
 	"credit": "Made with Blockbench",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"shaft": "simulated_pistons:block/simulated_piston/auger",
-		"particle": "simulated_pistons:block/simulated_piston/auger"
+		"particle": "simulated_pistons:block/simulated_piston/auger",
+		"shaft": "simulated_pistons:block/simulated_piston/auger"
 	},
 	"elements": [
 		{

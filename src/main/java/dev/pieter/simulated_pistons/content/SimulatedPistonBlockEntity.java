@@ -59,6 +59,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private double baseSubLevelY;
     private double baseSubLevelZ;
     private float lastAppliedExtension;
+    private boolean hasAssemblyPayload;
     @Nullable
     private PhysicsConstraintHandle pistonConstraint;
 
@@ -227,8 +228,13 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         final Direction facing = state.getValue(SimulatedPistonBlock.FACING);
         final BlockPos headPos = this.worldPosition.relative(facing, Math.max(0, this.chainLength - 1));
         final BlockPos toAssemble = headPos.relative(facing);
+        final boolean emptyFront = this.level.getBlockState(toAssemble).isAir();
 
         try {
+            if (emptyFront) {
+                this.placeTemporaryLinkBlock(toAssemble, facing);
+            }
+
             final Class<?> helperClass = Class.forName("dev.simulated_team.simulated.util.SimAssemblyHelper");
             final Method assemble = helperClass.getMethod(
                     "assembleFromSingleBlock",
@@ -241,6 +247,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
             final Object result = assemble.invoke(null, this.level, headPos, toAssemble, false, false);
             if (result == null) {
+                if (emptyFront) {
+                    this.level.removeBlock(toAssemble, false);
+                }
                 this.lastAssemblyStatus = "nothing_to_assemble";
                 this.setChanged();
                 this.sendData();
@@ -253,6 +262,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.subLevelAnchor = toAssemble.offset(offset);
             this.disassemblyGoal = toAssemble;
             this.linkPos = headPos.offset(offset);
+            this.hasAssemblyPayload = !emptyFront;
+            if (emptyFront) {
+                this.removeTemporaryLinkBlock(toAssemble.offset(offset));
+            }
             this.setHeadAssembled(facing, true);
             this.placeLinkBlock(facing);
             this.captureBaseSubLevelPosition(subLevel);
@@ -265,6 +278,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.setChanged();
             this.sendData();
         } catch (final ReflectiveOperationException e) {
+            if (emptyFront) {
+                this.level.removeBlock(toAssemble, false);
+            }
             this.lastAssemblyStatus = e.getClass().getSimpleName();
             this.setChanged();
             this.sendData();
@@ -288,8 +304,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.removePistonConstraint();
 
             final Object subLevel = this.getSubLevel(container);
+            this.removeLinkBlock();
 
-            if (subLevel != null) {
+            if (subLevel != null && this.hasAssemblyPayload) {
                 final Class<?> helperClass = Class.forName("dev.simulated_team.simulated.util.SimAssemblyHelper");
                 final Class<?> subLevelClass = Class.forName("dev.ryanhcode.sable.sublevel.SubLevel");
                 helperClass
@@ -303,12 +320,15 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
                                 boolean.class
                         )
                         .invoke(null, this.level, subLevel, this.subLevelAnchor, this.disassemblyGoal, Rotation.NONE, true);
+            } else if (subLevel != null) {
+                this.removeSubLevel(container, subLevel);
             }
 
             this.subLevelId = null;
             this.subLevelAnchor = null;
             this.disassemblyGoal = null;
             this.linkPos = null;
+            this.hasAssemblyPayload = false;
             this.setHeadAssembled(this.getBlockState().getValue(SimulatedPistonBlock.FACING), false);
             this.lastAppliedExtension = 0;
             this.lastAssemblyStatus = "disassembled";
@@ -319,6 +339,14 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.setChanged();
             this.sendData();
         }
+    }
+
+    public void cleanupAfterPistonRemoved() {
+        if (this.level == null || this.level.isClientSide || !this.isAttachmentAssembled()) {
+            return;
+        }
+
+        this.disassembleAttachment();
     }
 
     private void captureBaseSubLevelPosition(final Object subLevel) throws ReflectiveOperationException {
@@ -337,6 +365,35 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         if (this.level.getBlockEntity(this.linkPos) instanceof final SimulatedPistonLinkBlockEntity link) {
             link.setParent(this);
         }
+    }
+
+    private void placeTemporaryLinkBlock(final BlockPos pos, final Direction facing) {
+        this.level.setBlockAndUpdate(pos, SPBlocks.SIMULATED_PISTON_LINK.get().defaultBlockState().setValue(SimulatedPistonLinkBlock.FACING, facing));
+        if (this.level.getBlockEntity(pos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.beforeAssembly();
+        }
+    }
+
+    private void removeTemporaryLinkBlock(final BlockPos pos) {
+        if (this.level == null || pos.equals(this.linkPos)) {
+            return;
+        }
+
+        if (this.level.getBlockEntity(pos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.beforeCleanup();
+        }
+        this.level.removeBlock(pos, false);
+    }
+
+    private void removeLinkBlock() {
+        if (this.level == null || this.linkPos == null) {
+            return;
+        }
+
+        if (this.level.getBlockEntity(this.linkPos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.beforeCleanup();
+        }
+        this.level.removeBlock(this.linkPos, false);
     }
 
     private void setHeadAssembled(final Direction facing, final boolean assembled) {
@@ -455,6 +512,33 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
                 .invoke(container, this.subLevelId);
     }
 
+    private void removeSubLevel(final Object container, final Object subLevel) throws ReflectiveOperationException {
+        final Object plotPos = this.invokeNoArg(subLevel, "plotPos");
+        final int x = this.readInt(plotPos, "x");
+        final int z = this.readInt(plotPos, "z");
+        final Class<?> reasonClass = Class.forName("dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason");
+        final Object removed = Enum.valueOf((Class<? extends Enum>) reasonClass.asSubclass(Enum.class), "REMOVED");
+        container.getClass().getMethod("removeSubLevel", int.class, int.class, reasonClass).invoke(container, x, z, removed);
+    }
+
+    private Object invokeNoArg(final Object source, final String name) throws ReflectiveOperationException {
+        try {
+            return source.getClass().getMethod(name).invoke(source);
+        } catch (final NoSuchMethodException e) {
+            final Method method = source.getClass().getDeclaredMethod(name);
+            method.setAccessible(true);
+            return method.invoke(source);
+        }
+    }
+
+    private int readInt(final Object source, final String name) throws ReflectiveOperationException {
+        try {
+            return ((Number) source.getClass().getMethod(name).invoke(source)).intValue();
+        } catch (final NoSuchMethodException e) {
+            return ((Number) source.getClass().getField(name).get(source)).intValue();
+        }
+    }
+
     private Object getSubLevelPosition(final Object subLevel) throws ReflectiveOperationException {
         final Object pose = subLevel.getClass().getMethod("logicalPose").invoke(subLevel);
         return pose.getClass().getMethod("position").invoke(pose);
@@ -515,6 +599,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         tag.putFloat("LastTargetExtension", this.lastTargetExtension);
         tag.putString("LastAssemblyStatus", this.lastAssemblyStatus);
         tag.putString("LastMotionStatus", this.lastMotionStatus);
+        tag.putBoolean("HasAssemblyPayload", this.hasAssemblyPayload);
         tag.putDouble("BaseSubLevelX", this.baseSubLevelX);
         tag.putDouble("BaseSubLevelY", this.baseSubLevelY);
         tag.putDouble("BaseSubLevelZ", this.baseSubLevelZ);
@@ -540,6 +625,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.extension = Math.min(tag.getFloat("Extension"), this.chainLength);
         this.lastAssemblyStatus = tag.getString("LastAssemblyStatus");
         this.lastMotionStatus = tag.getString("LastMotionStatus");
+        this.hasAssemblyPayload = tag.contains("HasAssemblyPayload") ? tag.getBoolean("HasAssemblyPayload") : tag.hasUUID("SubLevelID");
         this.baseSubLevelX = tag.getDouble("BaseSubLevelX");
         this.baseSubLevelY = tag.getDouble("BaseSubLevelY");
         this.baseSubLevelZ = tag.getDouble("BaseSubLevelZ");
