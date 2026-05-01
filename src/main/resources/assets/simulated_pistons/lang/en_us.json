@@ -1,4 +1,5 @@
 {
   "block.simulated_pistons.simulated_piston": "Simulated Piston",
-  "item.simulated_pistons.simulated_piston": "Simulated Piston"
+  "item.simulated_pistons.simulated_piston": "Simulated Piston",
+  "block.simulated_pistons.simulated_piston.cog": "Piston Cog"
 }

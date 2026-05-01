@@ -12,6 +12,15 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
 
+sourceSets {
+    simulatedApiStubs {
+        compileClasspath += sourceSets.main.compileClasspath
+    }
+    main {
+        compileClasspath += simulatedApiStubs.output
+    }
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
@@ -59,8 +68,8 @@ dependencies {
     }
 
     // Simulated and Aeronautics are declared as required runtime mods in mods.toml.
-    // This prototype does not import their APIs yet, keeping the compile path focused
-    // on Minecraft/NeoForge/Create until the moving contraption integration lands.
+    // Tiny compile-only stubs for Simulated's ExtraKinetics API live in
+    // src/simulatedApiStubs and are intentionally not packaged into the jar.
 }
 
 tasks.withType(ProcessResources).configureEach {

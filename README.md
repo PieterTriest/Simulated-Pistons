@@ -13,7 +13,7 @@ An aligned piston chain is classified automatically:
 - `Middle`: a housing segment that continues the piston body.
 - `Head`: the final segment. This is the intended contraption attachment side.
 
-Every segment exposes a shaft along the piston axis, so rotational power can pass through the piston chain like an extendable shaft. The block entity tracks extension progress from rotation speed: positive speed extends, negative speed retracts, and the maximum stroke is the number of connected piston segments.
+Every segment exposes a shaft along the piston axis, so rotational power can pass through the piston chain like an extendable shaft. Extension is actuated separately by the integrated side cog, matching the Simulated swivel bearing pattern: positive cog speed extends, negative cog speed retracts, and the maximum stroke is the number of connected piston segments.
 
 ## Current Prototype
 
@@ -22,8 +22,9 @@ This first implementation is a basic working concept:
 - Registers a NeoForge addon mod for Minecraft 1.21.1.
 - Adds a placeable `simulated_piston` block and item.
 - Automatically connects aligned piston blocks and updates their controller/middle/head/single texture state.
-- Provides Create kinetic shaft connectivity along the piston axis.
-- Tracks extension progress in the kinetic block entity for testing.
+- Provides Create kinetic shaft connectivity along the piston axis for passthrough power.
+- Adds a Simulated-style extra cog kinetic input for piston actuation.
+- Tracks extension progress from the side cog speed in the kinetic block entity for testing.
 - Includes placeholder block models, blockstates, lang, loot table, recipe, and tags.
 
 The prototype does not yet move a Create/Aeronautics contraption. That is the next major step: replacing the progress-only block entity with a controlled contraption entity/assembly flow modeled after Simulated's swivel bearing and Create's piston mechanics.

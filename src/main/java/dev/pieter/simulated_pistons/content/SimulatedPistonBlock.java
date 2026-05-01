@@ -6,6 +6,7 @@ import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.block.IBE;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
+import dev.simulated_team.simulated.util.extra_kinetics.ExtraKinetics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
@@ -21,7 +22,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import org.jetbrains.annotations.Nullable;
 
-public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonBlockEntity>, IRotate {
+public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonBlockEntity>, IRotate, ExtraKinetics.ExtraKineticsBlock {
     public static final EnumProperty<Segment> SEGMENT = EnumProperty.create("segment", Segment.class);
 
     public SimulatedPistonBlock(final Properties properties) {
@@ -92,6 +93,11 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     @Override
     public BlockEntityType<? extends SimulatedPistonBlockEntity> getBlockEntityType() {
         return SPBlockEntityTypes.SIMULATED_PISTON.get();
+    }
+
+    @Override
+    public IRotate getExtraKineticsRotationConfiguration() {
+        return SimulatedPistonBlockEntity.PistonCogBlockEntity.EXTRA_COGWHEEL_CONFIG;
     }
 
     public static void updateChain(final Level level, final BlockPos origin, final Direction facing) {
