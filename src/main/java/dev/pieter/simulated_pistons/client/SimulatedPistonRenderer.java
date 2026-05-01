@@ -30,6 +30,7 @@ public class SimulatedPistonRenderer extends KineticBlockEntityRenderer<Simulate
 
         if (segment == SimulatedPistonBlock.Segment.SINGLE || segment == SimulatedPistonBlock.Segment.CONTROLLER) {
             renderRotatingBuffer(be, CachedBuffers.partialFacing(SPPartialModels.SHAFT_SIXTEENTH, state, facing.getOpposite()), ms, vb, light);
+            renderRotatingBuffer(be.getExtraKinetics(), CachedBuffers.partialFacingVertical(SPPartialModels.CONTROLLER_GEAR, state, facing), ms, vb, light);
         }
 
         if (!state.getValue(SimulatedPistonBlock.ASSEMBLED) && (segment == SimulatedPistonBlock.Segment.SINGLE || segment == SimulatedPistonBlock.Segment.HEAD)) {
