@@ -1,43 +1,37 @@
 {
-  "parent": "minecraft:block/block",
-  "textures": {
-    "housing": "minecraft:block/iron_block",
-    "shaft": "simulated:block/auger_shaft/auger",
-    "particle": "minecraft:block/iron_block"
-  },
-  "elements": [
-    {
-      "from": [1, 0, 1],
-      "to": [15, 12, 15],
-      "faces": {
-        "north": { "texture": "#shaft", "uv": [0, 2, 7, 8] },
-        "east": { "texture": "#shaft", "uv": [0, 2, 7, 8] },
-        "south": { "texture": "#shaft", "uv": [0, 2, 7, 8] },
-        "west": { "texture": "#shaft", "uv": [0, 2, 7, 8] }
-      }
-    },
-    {
-      "from": [0, 12, 0],
-      "to": [16, 14, 16],
-      "faces": {
-        "north": { "texture": "#housing", "uv": [0, 12, 16, 14] },
-        "east": { "texture": "#housing", "uv": [0, 12, 16, 14] },
-        "south": { "texture": "#housing", "uv": [0, 12, 16, 14] },
-        "west": { "texture": "#housing", "uv": [0, 12, 16, 14] },
-        "up": { "texture": "#housing", "uv": [0, 0, 16, 16] },
-        "down": { "texture": "#housing", "uv": [0, 0, 16, 16] }
-      }
-    },
-    {
-      "from": [3, 12, 3],
-      "to": [13, 14, 13],
-      "faces": {
-        "north": { "texture": "#housing", "uv": [3, 12, 13, 14] },
-        "east": { "texture": "#housing", "uv": [3, 12, 13, 14] },
-        "south": { "texture": "#housing", "uv": [3, 12, 13, 14] },
-        "west": { "texture": "#housing", "uv": [3, 12, 13, 14] },
-        "up": { "texture": "#housing", "uv": [3, 3, 13, 13] }
-      }
-    }
-  ]
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"1": "simulated_pistons:block/simulated_piston/swivel_bearing",
+		"particle": "simulated_pistons:block/simulated_piston/swivel_bearing",
+		"shaft": "simulated_pistons:block/simulated_piston/auger"
+	},
+	"elements": [
+		{
+			"name": "auger_base",
+			"from": [1, 0, 1],
+			"to": [15, 10, 15],
+			"faces": {
+				"north": {"uv": [0, 2, 7, 8], "texture": "#shaft"},
+				"east": {"uv": [0, 2, 7, 8], "texture": "#shaft"},
+				"south": {"uv": [0, 2, 7, 8], "texture": "#shaft"},
+				"west": {"uv": [0, 2, 7, 8], "texture": "#shaft"}
+			}
+		},
+		{
+			"name": "head",
+			"from": [0, 10, 0],
+			"to": [16, 14, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [1, -2, 1]},
+			"faces": {
+				"north": {"uv": [0, 6, 8, 8], "texture": "#1"},
+				"east": {"uv": [0, 6, 8, 8], "texture": "#1"},
+				"south": {"uv": [0, 6, 8, 8], "texture": "#1"},
+				"west": {"uv": [0, 6, 8, 8], "texture": "#1"},
+				"up": {"uv": [0, 8, 8, 16], "texture": "#1"},
+				"down": {"uv": [0, 8, 8, 16], "texture": "#1"}
+			}
+		}
+	]
 }
