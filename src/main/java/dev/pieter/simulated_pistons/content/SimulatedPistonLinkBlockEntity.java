@@ -16,6 +16,7 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,18 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
     }
 
     @Override
+    public AABB getRenderBoundingBox() {
+        final BlockState state = this.getBlockState();
+        if (!(state.getBlock() instanceof SimulatedPistonLinkBlock)) {
+            return super.getRenderBoundingBox();
+        }
+
+        final net.minecraft.core.Direction shaftDirection = state.getValue(SimulatedPistonLinkBlock.FACING).getOpposite();
+        final BlockPos end = this.getBlockPos().relative(shaftDirection, Math.max(1, this.chainLength));
+        return AABB.encapsulatingFullBlocks(this.getBlockPos(), end).inflate(1.0);
+    }
+
+    @Override
     public void remove() {
         if (!this.level.isClientSide && !this.assembling && this.parent != null) {
             this.level.destroyBlock(this.parent, false);
@@ -90,6 +103,14 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
 
     @Override
     public void sable$physicsTick(final ServerSubLevel subLevel, final RigidBodyHandle handle, final double timeStep) {
+        if (this.parent == null) {
+            return;
+        }
+
+        final BlockEntity parentBE = this.level.getBlockEntity(this.parent);
+        if (parentBE instanceof final SimulatedPistonBlockEntity piston) {
+            piston.updatePistonConstraintMotor();
+        }
     }
 
     @Override

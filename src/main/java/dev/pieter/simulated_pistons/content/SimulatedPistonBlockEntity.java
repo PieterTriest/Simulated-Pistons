@@ -14,6 +14,7 @@ import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.plot.LevelPlot;
+import dev.pieter.simulated_pistons.SimulatedPistons;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import dev.pieter.simulated_pistons.index.SPBlocks;
 import dev.simulated_team.simulated.util.extra_kinetics.ExtraBlockPos;
@@ -63,6 +64,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private double baseSubLevelX;
     private double baseSubLevelY;
     private double baseSubLevelZ;
+    private double baseParentLocalX;
+    private double baseParentLocalY;
+    private double baseParentLocalZ;
     private float lastAppliedExtension;
     private boolean hasAssemblyPayload;
     private boolean assembleNextTick;
@@ -71,6 +75,12 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private float assemblySuppressedSpeed;
     @Nullable
     private FreeConstraintHandle pistonConstraint;
+    private int debugTickCounter;
+    private float debugLastActuatorSpeed = Float.NaN;
+    private float debugLastExtension = Float.NaN;
+    private String debugLastActuatorSource = "unset";
+    @Nullable
+    private BlockPos debugLastActuatorSourcePos;
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
@@ -92,6 +102,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         final float actuatorSpeed = this.getActuatorSpeed();
         this.lastActuatorSpeed = actuatorSpeed;
         this.updateAssemblySuppression(actuatorSpeed);
+        this.debugInputTick("after_speed_read", actuatorSpeed, 0, false);
 
         final boolean toggledAssembly = this.toggleAssemblyNextTick;
         if (this.toggleAssemblyNextTick) {
@@ -132,13 +143,44 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         if (this.isAttachmentAssembled()) {
             this.ensurePistonConstraint();
             this.updatePistonConstraintMotor();
+            this.moveAssembledSubLevel();
             this.lastAppliedExtension = this.extension;
         }
+        this.debugInputTick("after_motion", actuatorSpeed, movementSpeed, extensionChanged);
 
         if (extensionChanged) {
             this.setChanged();
             this.sendData();
         }
+    }
+
+    private void debugInputTick(final String phase, final float actuatorSpeed, final float movementSpeed, final boolean extensionChanged) {
+        this.debugTickCounter++;
+        final boolean speedChanged = actuatorSpeed != this.debugLastActuatorSpeed;
+        final boolean extensionChangedSinceLastLog = this.extension != this.debugLastExtension;
+        final boolean periodic = this.isAttachmentAssembled() && this.debugTickCounter % 80 == 0;
+        if (!speedChanged && !extensionChanged && !extensionChangedSinceLastLog && !periodic) {
+            return;
+        }
+
+        this.debugLastActuatorSpeed = actuatorSpeed;
+        this.debugLastExtension = this.extension;
+        SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] {} controller={} assembled={} source={} sourcePos={} actuatorSpeed={} movementSpeed={} extension={} target={} chainLength={} constraint={} subLevelId={} linkPos={} suppressed={}/{}",
+                phase,
+                this.worldPosition,
+                this.isAttachmentAssembled(),
+                this.debugLastActuatorSource,
+                this.debugLastActuatorSourcePos,
+                actuatorSpeed,
+                movementSpeed,
+                this.extension,
+                this.lastTargetExtension,
+                this.chainLength,
+                this.pistonConstraint == null ? "null" : this.pistonConstraint.isValid(),
+                this.subLevelId,
+                this.linkPos,
+                this.assemblySuppressedUntilStopped,
+                this.assemblySuppressedSpeed);
     }
 
     private void updateAssemblySuppression(final float actuatorSpeed) {
@@ -193,15 +235,21 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private float getActuatorSpeed() {
         final float extraCogSpeed = this.cogwheel.getSpeed();
         if (extraCogSpeed != 0 || this.level == null) {
+            this.debugLastActuatorSource = extraCogSpeed != 0 ? "extra_cog" : "no_level";
+            this.debugLastActuatorSourcePos = this.worldPosition;
             return extraCogSpeed;
         }
 
         final BlockState state = this.getBlockState();
         if (!(state.getBlock() instanceof SimulatedPistonBlock)) {
+            this.debugLastActuatorSource = "not_piston";
+            this.debugLastActuatorSourcePos = this.worldPosition;
             return 0;
         }
 
         final Direction.Axis pistonAxis = state.getValue(SimulatedPistonBlock.FACING).getAxis();
+        this.debugLastActuatorSource = "none";
+        this.debugLastActuatorSourcePos = null;
         for (final Direction direction : Direction.values()) {
             if (direction.getAxis() == pistonAxis) {
                 continue;
@@ -219,6 +267,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
             final BlockEntity neighbour = this.level.getBlockEntity(neighbourPos);
             if (neighbour instanceof final KineticBlockEntity kineticNeighbour) {
+                this.debugLastActuatorSource = "neighbor_" + direction.getName();
+                this.debugLastActuatorSourcePos = neighbourPos;
                 return kineticNeighbour.getSpeed();
             }
         }
@@ -480,6 +530,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.baseSubLevelX = this.readDouble(position, "x");
         this.baseSubLevelY = this.readDouble(position, "y");
         this.baseSubLevelZ = this.readDouble(position, "z");
+        this.captureBaseParentLocalPosition();
     }
 
     private void placeLinkBlock(final Direction facing) {
@@ -570,18 +621,22 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             final SubLevel subLevel = container.getSubLevel(this.subLevelId);
             if (subLevel != null) {
                 this.attachPistonConstraint(subLevel, state.getValue(SimulatedPistonBlock.FACING));
+            } else {
+                SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] ensure constraint: missing sublevel controller={} subLevelId={} linkPos={} extension={}", this.worldPosition, this.subLevelId, this.linkPos, this.extension);
             }
         } catch (final RuntimeException e) {
+            SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] ensure constraint exception: controller={} type={} message={}", this.worldPosition, e.getClass().getSimpleName(), e.getMessage());
             this.lastMotionStatus = e.getClass().getSimpleName();
         }
     }
 
-    private void updatePistonConstraintMotor() {
+    void updatePistonConstraintMotor() {
         if (this.pistonConstraint == null) {
             return;
         }
 
         if (!this.pistonConstraint.isValid()) {
+            SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] motor update: invalid constraint controller={} subLevelId={} linkPos={} extension={}", this.worldPosition, this.subLevelId, this.linkPos, this.extension);
             this.pistonConstraint = null;
             return;
         }
@@ -613,6 +668,16 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.baseSubLevelX = subLevel.logicalPose().position().x();
         this.baseSubLevelY = subLevel.logicalPose().position().y();
         this.baseSubLevelZ = subLevel.logicalPose().position().z();
+        this.captureBaseParentLocalPosition();
+    }
+
+    private void captureBaseParentLocalPosition() {
+        final Vector3d base = new Vector3d(this.baseSubLevelX, this.baseSubLevelY, this.baseSubLevelZ);
+        final SubLevel containing = Sable.HELPER.getContaining(this);
+        final Vector3d localBase = containing != null ? containing.logicalPose().transformPositionInverse(base) : base;
+        this.baseParentLocalX = localBase.x;
+        this.baseParentLocalY = localBase.y;
+        this.baseParentLocalZ = localBase.z;
     }
 
     private void moveAssembledSubLevel() {
@@ -637,12 +702,16 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             }
 
             final Direction facing = state.getValue(SimulatedPistonBlock.FACING);
-            final double x = this.baseSubLevelX + facing.getStepX() * this.extension;
-            final double y = this.baseSubLevelY + facing.getStepY() * this.extension;
-            final double z = this.baseSubLevelZ + facing.getStepZ() * this.extension;
+            final Vector3d parentLocalTarget = new Vector3d(
+                    this.baseParentLocalX + facing.getStepX() * this.extension,
+                    this.baseParentLocalY + facing.getStepY() * this.extension,
+                    this.baseParentLocalZ + facing.getStepZ() * this.extension
+            );
+            final SubLevel containing = Sable.HELPER.getContaining(this);
+            final Vector3d target = containing != null ? containing.logicalPose().transformPosition(parentLocalTarget) : parentLocalTarget;
             final Object pose = subLevel.getClass().getMethod("logicalPose").invoke(subLevel);
             final Object position = pose.getClass().getMethod("position").invoke(pose);
-            position.getClass().getMethod("set", double.class, double.class, double.class).invoke(position, x, y, z);
+            position.getClass().getMethod("set", double.class, double.class, double.class).invoke(position, target.x, target.y, target.z);
 
             this.teleportSubLevel(container, subLevel, pose, position);
             subLevel.getClass().getMethod("updateLastPose").invoke(subLevel);
@@ -758,6 +827,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         tag.putDouble("BaseSubLevelX", this.baseSubLevelX);
         tag.putDouble("BaseSubLevelY", this.baseSubLevelY);
         tag.putDouble("BaseSubLevelZ", this.baseSubLevelZ);
+        tag.putDouble("BaseParentLocalX", this.baseParentLocalX);
+        tag.putDouble("BaseParentLocalY", this.baseParentLocalY);
+        tag.putDouble("BaseParentLocalZ", this.baseParentLocalZ);
         tag.putFloat("LastAppliedExtension", this.lastAppliedExtension);
         if (this.subLevelId != null) {
             tag.putUUID("SubLevelID", this.subLevelId);
@@ -786,6 +858,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.baseSubLevelX = tag.getDouble("BaseSubLevelX");
         this.baseSubLevelY = tag.getDouble("BaseSubLevelY");
         this.baseSubLevelZ = tag.getDouble("BaseSubLevelZ");
+        this.baseParentLocalX = tag.contains("BaseParentLocalX") ? tag.getDouble("BaseParentLocalX") : this.baseSubLevelX;
+        this.baseParentLocalY = tag.contains("BaseParentLocalY") ? tag.getDouble("BaseParentLocalY") : this.baseSubLevelY;
+        this.baseParentLocalZ = tag.contains("BaseParentLocalZ") ? tag.getDouble("BaseParentLocalZ") : this.baseSubLevelZ;
         this.lastAppliedExtension = tag.getFloat("LastAppliedExtension");
         this.subLevelId = tag.hasUUID("SubLevelID") ? tag.getUUID("SubLevelID") : null;
         this.subLevelAnchor = tag.contains("SubLevelAnchor") ? NbtUtils.readBlockPos(tag, "SubLevelAnchor").orElse(null) : null;
@@ -821,6 +896,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         @Override
         public void onSpeedChanged(final float previousSpeed) {
             super.onSpeedChanged(previousSpeed);
+            SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] extra cog speed changed: parent={} previous={} current={} assembled={}", this.parent.getBlockPos(), previousSpeed, this.speed, this.parent.isAttachmentAssembled());
 
             if (this.speed != 0 && !this.parent.isAttachmentAssembled()) {
                 this.parent.requestAssemblyNextTick();

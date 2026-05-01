@@ -42,4 +42,9 @@ public class SimulatedPistonLinkRenderer implements BlockEntityRenderer<Simulate
     public boolean shouldRenderOffScreen(final SimulatedPistonLinkBlockEntity be) {
         return true;
     }
+
+    @Override
+    public int getViewDistance() {
+        return 256;
+    }
 }
