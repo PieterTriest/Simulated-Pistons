@@ -8,6 +8,7 @@ Open these files in Blockbench:
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/single.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/head.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/head_unassembled.json`
+- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/item.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/bearing_plate.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/auger_axis_y.json`
 
