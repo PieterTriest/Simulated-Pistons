@@ -2,7 +2,7 @@
 
 ## Summary
 
-When a simulated piston is itself inside a Sable sublevel, the piston head/link can be misplaced during empty-head assembly. Assembly with blocks attached works better, so the current suspicion is a mismatch between the normal payload assembly path and the custom empty-sublevel workaround.
+When a Simulated Piston is itself inside a Sable sublevel, the piston head/link can be misplaced during empty-head assembly. Assembly with blocks attached works better, so the current suspicion is a mismatch between the normal payload assembly path and the custom empty-sublevel workaround.
 
 ## Known-Good Path
 
@@ -21,9 +21,9 @@ When a simulated piston is itself inside a Sable sublevel, the piston head/link 
 
 ## Upstream Reference Concepts
 
-- Simulated's `SimAssemblyHelper.assembleFromSingleBlock` is the reference payload assembly helper.
-- Simulated's swivel bearing block entity has a similar empty-sublevel pattern for bearing links.
-- Simulated's physics assembler projects disassembly goals through the sublevel logical pose; this may matter if empty assembly still needs explicit projection.
+- Create Simulated's `SimAssemblyHelper.assembleFromSingleBlock` is the reference payload assembly helper.
+- Create Simulated's swivel bearing block entity has a similar empty-sublevel pattern for bearing links.
+- Create Simulated's physics assembler projects disassembly goals through the sublevel logical pose; this may matter if empty assembly still needs explicit projection.
 
 ## Tests To Run
 

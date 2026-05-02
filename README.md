@@ -1,6 +1,6 @@
 # Create: Simulated Pistons
 
-Create: Simulated Pistons is an experimental Create Aeronautics addon that adds stackable simulated pistons with kinetic passthrough. The goal is a Create-style actuator for Simulated/Aeronautics sublevel contraptions: piston bodies define the stroke, the center shaft carries rotation, and a side cog drives extension.
+Create: Simulated Pistons is a stackable piston system for Create Aeronautics that moves live sublevel contraptions with kinetic passthrough. The goal is a Create-style actuator for Sable sublevel contraptions: piston bodies define the stroke, the center shaft carries rotation, and a side cog drives extension.
 
 ## Alpha Warning
 
@@ -25,11 +25,11 @@ The mod is required on both client and server.
 ## Basic Usage
 
 1. Install the required dependencies.
-2. Place one or more Simulated Pistons in a straight line facing the same direction.
+2. Place one or more Simulated Piston blocks in a straight line facing the same direction.
 3. Use a wrench to rotate the piston facing.
 4. Connect Create rotational power along the piston axis for shaft passthrough.
 5. Place and power a cogwheel beside the controller segment to drive the actuator input.
-6. Empty-hand right click the controller to assemble the blocks in front of the piston head into a Simulated sublevel.
+6. Empty-hand right click the controller to assemble the blocks in front of the piston head into a Sable sublevel.
 7. Empty-hand right click again to disassemble or reset the attachment.
 
 Each piston segment contributes one block of maximum stroke. A single piston acts as both controller and head; a longer line is classified as controller, middle segments, and head.
@@ -40,9 +40,9 @@ Each piston segment contributes one block of maximum stroke. A single piston act
 - Adds the `simulated_pistons:simulated_piston` block and item.
 - Automatically classifies aligned piston chains as single, controller, middle, or head.
 - Provides Create kinetic shaft connectivity along the piston axis.
-- Adds a Simulated-style side cog kinetic input for piston actuation.
+- Adds a side cog kinetic input for piston actuation.
 - Tracks extension progress from actuator speed.
-- Assembles and disassembles a Simulated sublevel attachment from the piston head.
+- Assembles and disassembles a Sable sublevel attachment from the piston head.
 - Stores assembly and motion status in block entity data for diagnostics.
 - Includes early block models, blockstates, language data, loot table, recipe, and tags.
 
@@ -70,7 +70,7 @@ See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for the current public issue list.
 
 When reporting issues, include:
 
-- Minecraft, NeoForge, Create, Create Aeronautics, Sable, and Simulated Pistons versions.
+- Minecraft, NeoForge, Create, Create Aeronautics, Sable, and Create: Simulated Pistons versions.
 - Any bundled module versions shown in the mod list if they look relevant, especially Create Simulated, Sable Companion, Flywheel, or Ponder.
 - Whether the issue happens in singleplayer, LAN, or dedicated server.
 - A short reproduction with piston chain length, facing, attached blocks, and whether the piston is inside a Sable sublevel.
@@ -81,8 +81,8 @@ Please test on a backed-up world and mention whether other mods are installed.
 
 ## Credits
 
-Inspired by Create, Create Aeronautics, Simulated, and Sable. The piston design borrows concepts from Create kinetic blocks and Simulated/Aeronautics sublevel controllers, especially the swivel bearing style of interaction and assembly.
+Inspired by Create, Create Aeronautics, Create Simulated, and Sable. The piston design borrows concepts from Create kinetic blocks and Create Simulated/Create Aeronautics sublevel controllers, especially the swivel bearing style of interaction and assembly.
 
 ## License
 
-Original code and documentation in this repository are licensed under MIT. Some current placeholder assets and compile-time stubs have upstream Create/Aeronautics/Simulated provenance concerns or attribution requirements. Do not assume every asset is cleared for redistribution until the audit items are resolved. See [docs/license-audit.md](docs/license-audit.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Original code and documentation in this repository are licensed under MIT. Adapted Create Simulated API stubs require upstream MIT notice, and unresolved copied or derived assets are not cleared for public redistribution. Do not assume the repository as a whole is ready to redistribute until the audit blockers are resolved. See [docs/license-audit.md](docs/license-audit.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

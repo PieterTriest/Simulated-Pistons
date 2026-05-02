@@ -27,8 +27,8 @@ This mod intentionally does not recreate Create's mechanical piston lifecycle. T
 - Build piston length from aligned piston blocks, not separate pole blocks.
 - Use the center shaft as rotational passthrough for attached machinery.
 - Use the side cog as actuator input.
-- Assemble and move a Simulated/Aeronautics-compatible sublevel contraption.
-- Use empty-hand right click as a reset/return action, following the Simulated swivel bearing interaction style.
+- Assemble and move a Sable sublevel contraption.
+- Use empty-hand right click as a reset/return action, following the Create Simulated swivel bearing interaction style.
 - Keep the attached contraption live while moving or stopped instead of placing it back into the world like a Create mechanical piston.
 
 ## Useful Data Checks
@@ -58,4 +58,4 @@ In-game command:
 
 ## License Hygiene
 
-Before publishing a build, review [license-audit.md](license-audit.md). Upstream Create and Simulated/Aeronautics code is MIT, but upstream assets are not freely redistributable under MIT. Install testing should use the official Create, Create Aeronautics, and Sable packages; bundled modules such as Create Simulated, Create Offroad, Sable Companion, Flywheel, and Ponder may appear in the mod list.
+Before publishing a build, review [license-audit.md](license-audit.md). Upstream Create and Create Simulated/Create Aeronautics code is MIT, but upstream assets are not freely redistributable under MIT. Install testing should use the official Create, Create Aeronautics, and Sable packages; bundled/internal modules such as Create Simulated, Create Offroad, Sable Companion, Vail, Flywheel, and Ponder may appear in the mod list.

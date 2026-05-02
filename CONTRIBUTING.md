@@ -6,7 +6,7 @@ Thanks for helping test Create: Simulated Pistons.
 
 - Back up your world and reproduce the issue in a small test setup when possible.
 - Check [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for already-known alpha limitations.
-- Include exact versions for Minecraft, NeoForge, Create, Create Aeronautics, Sable, and this mod.
+- Include exact versions for Minecraft, NeoForge, Create, Create Aeronautics, Sable, and Create: Simulated Pistons.
 - If the issue involves loading, rendering, or sublevels, also include relevant bundled module versions from the in-game mod list, such as Create Simulated, Sable Companion, Flywheel, or Ponder.
 - Include logs or crash reports for errors and screenshots for placement or rendering bugs.
 

@@ -13,20 +13,20 @@ This is a practical release-prep audit, not legal advice. Anything marked `Needs
 
 ## Summary
 
-MIT is suitable for original code in this repository. It is also compatible with MIT-licensed upstream code from Create and Simulated/Aeronautics when required notices are preserved.
+MIT is suitable for original code and documentation in this repository. It is also compatible with MIT-licensed upstream code from Create and the Create Simulated/Create Aeronautics sources when required notices are preserved.
 
-The blocker is assets: Create and Simulated/Aeronautics both distinguish code from assets, and their asset directories are all-rights-reserved. Any copied or closely adapted upstream texture/model assets should be replaced, permissioned, or excluded before public redistribution. The repository `LICENSE` is intended for original code and documentation; it does not make unresolved third-party assets safe to ship.
+The blocker is assets: Create and the Create Simulated/Create Aeronautics sources distinguish code from assets, and their asset directories are all-rights-reserved. Any copied or closely adapted upstream texture/model assets should be replaced, permissioned, or excluded before public redistribution. The repository `LICENSE` is intended for original code and documentation; it does not make unresolved third-party assets safe to ship.
 
 ## Audit Table
 
 | Area/File | Origin | Copied / Adapted / Inspired / Original | Upstream License | Required Attribution | Action Needed |
 |---|---|---|---|---|---|
-| `src/main/java/dev/pieter/simulated_pistons/**` | Project implementation with Create and Simulated/Aeronautics API patterns | Original / Inspired | Project MIT for original code; upstream APIs/patterns from MIT code | Credit Create, Sable, Simulated, and Aeronautics in README | OK for MIT, subject to review for any copied snippets |
+| `src/main/java/dev/pieter/simulated_pistons/**` | Project implementation with Create, Sable, Create Simulated, and Create Aeronautics API patterns | Original / Inspired | Project MIT for original code; upstream APIs/patterns from MIT code | Credit Create, Sable, Create Simulated, and Create Aeronautics in README | OK for MIT, subject to review for any copied snippets |
 | `src/simulatedApiStubs/java/dev/simulated_team/simulated/util/extra_kinetics/ExtraKinetics.java` | Simulated `ExtraKinetics` API shape, reduced local compile stub | Adapted | Simulated Project code license: MIT | Simulated Team / Creators of Aeronautics MIT notice | Notice added in `THIRD_PARTY_NOTICES.md`; replacing with dependency/API-only approach would still be cleaner |
 | `src/simulatedApiStubs/java/dev/simulated_team/simulated/util/extra_kinetics/ExtraBlockPos.java` | Simulated `ExtraBlockPos` API shape, reduced local compile stub | Adapted | Simulated Project code license: MIT | Simulated Team / Creators of Aeronautics MIT notice | Notice added in `THIRD_PARTY_NOTICES.md`; replacing with dependency/API-only approach would still be cleaner |
-| `src/main/resources/assets/simulated_pistons/textures/block/simulated_piston/auger.png` | Matches local Simulated `auger_shaft/auger.png` by SHA-256 | Copied | Simulated Project assets: All Rights Reserved | Permission from The Simulated Team / Creators of Aeronautics required | Needs manual review; replace or obtain explicit redistribution permission |
+| `src/main/resources/assets/simulated_pistons/textures/block/simulated_piston/auger.png` | Matches local Create Simulated `auger_shaft/auger.png` by SHA-256 | Copied | Simulated Project assets: All Rights Reserved | Permission from The Simulated Team / Creators of Aeronautics required | Needs manual review; replace or obtain explicit redistribution permission |
 | `src/main/resources/assets/simulated_pistons/textures/block/simulated_piston/swivel_bearing.png` | Similar name/purpose to Simulated `swivel_bearing.png`; hash differs from local upstream file | Adapted / Uncertain | Simulated Project assets: All Rights Reserved if derived | Permission required if copied or derived | Needs manual review; prove original source or replace |
-| `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/bearing_plate.json` | Similar to Simulated/Aeronautics bearing plate concepts | Adapted / Uncertain | Upstream asset directories: All Rights Reserved if copied or derived | Permission required if copied or derived | Needs manual review; replace or document original authorship |
+| `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/bearing_plate.json` | Similar to Create Simulated/Create Aeronautics bearing plate concepts | Adapted / Uncertain | Upstream asset directories: All Rights Reserved if copied or derived | Permission required if copied or derived | Needs manual review; replace or document original authorship |
 | `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/auger_axis_y.json` | Similar to Simulated auger/shaft assets | Adapted / Uncertain | Upstream asset directories: All Rights Reserved if copied or derived | Permission required if copied or derived | Needs manual review; replace or document original authorship |
 | Other `src/main/resources/assets/simulated_pistons/models/**` | Project placeholder block models using local texture names and Create-style conventions | Original / Uncertain | Project MIT only if original; upstream assets all-rights-reserved if derived | Attribute upstream inspiration; preserve permissions for derived assets | Needs manual review for Blockbench/model provenance |
 | `src/main/resources/assets/simulated_pistons/blockstates/**` | Project blockstate definitions | Original | Project MIT | None beyond project license | OK |
@@ -38,13 +38,13 @@ The blocker is assets: Create and Simulated/Aeronautics both distinguish code fr
 
 ## Recommended Project License
 
-Use MIT for original source code and documentation in this repository. This matches the existing Gradle metadata and is compatible with Create and Simulated/Aeronautics MIT-licensed code portions.
+Use MIT for original source code and documentation in this repository. This matches the existing Gradle metadata and is compatible with Create and Create Simulated/Create Aeronautics MIT-licensed code portions.
 
 Do not claim all repository assets are MIT unless the asset provenance is resolved. The current `LICENSE` covers original code and documentation; the public README points readers to this audit for mixed-origin material.
 
-## Release Actions Before Publishing
+## Public File Release Blockers
 
 - Replace `auger.png` with an original or explicitly permissioned texture.
-- Confirm the provenance of `swivel_bearing.png`.
-- Confirm the provenance of all Blockbench model JSON files, especially bearing/auger parts.
+- Replace or verify provenance of `swivel_bearing.png`.
+- Replace or verify provenance of bearing/auger model parts.
 - Re-run this audit after final art replacement.
