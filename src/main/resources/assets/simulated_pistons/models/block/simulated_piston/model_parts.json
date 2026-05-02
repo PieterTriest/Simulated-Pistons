@@ -1,0 +1,16 @@
+{
+  "generated_credit": "Generated from simulated_piston source_parts; edit source parts instead.",
+  "outputs": {
+    "single_unassembled": {
+      "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/single_unassembled.json",
+      "parent": "minecraft:block/block",
+      "texture_size": [32, 32],
+      "parts": [
+        "source_parts/controller_base",
+        "source_parts/controller_gear",
+        "source_parts/controller_short_case",
+        "source_parts/piston_link_plate"
+      ]
+    }
+  }
+}

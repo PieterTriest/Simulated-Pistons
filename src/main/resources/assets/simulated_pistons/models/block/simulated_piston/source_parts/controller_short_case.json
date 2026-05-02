@@ -1,0 +1,454 @@
+﻿{
+    "format_version":  "1.21.11",
+    "credit":  "Source part extracted from single.json; edit this source part before regenerating composites.",
+    "parent":  "minecraft:block/block",
+    "texture_size":  [
+                         32,
+                         32
+                     ],
+    "textures":  {
+                     "1":  "simulated_pistons:block/simulated_piston/piston_shaft",
+                     "particle":  "simulated_pistons:block/simulated_piston/piston_frame",
+                     "bearing":  "simulated_pistons:block/simulated_piston/piston_frame"
+                 },
+    "elements":  [
+                     {
+                         "name":  "piston_shaft_side",
+                         "from":  [
+                                      1,
+                                      10,
+                                      1
+                                  ],
+                         "to":  [
+                                    15,
+                                    15,
+                                    3
+                                ],
+                         "rotation":  {
+                                          "angle":  0,
+                                          "axis":  "y",
+                                          "origin":  [
+                                                         0,
+                                                         6,
+                                                         0
+                                                     ]
+                                      },
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                7,
+                                                                2.5
+                                                            ],
+                                                     "texture":  "#1"
+                                                 },
+                                       "east":  {
+                                                    "uv":  [
+                                                               6,
+                                                               0,
+                                                               7,
+                                                               2.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                8.5,
+                                                                4.5,
+                                                                15.5,
+                                                                7
+                                                            ],
+                                                     "rotation":  180,
+                                                     "texture":  "#1"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               1,
+                                                               2.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                },
+                                       "up":  {
+                                                  "uv":  [
+                                                             8.5,
+                                                             0.5,
+                                                             15.5,
+                                                             1.5
+                                                         ],
+                                                  "texture":  "#1"
+                                              },
+                                       "down":  {
+                                                    "uv":  [
+                                                               8.5,
+                                                               6.5,
+                                                               15.5,
+                                                               7.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "piston_shaft_side",
+                         "from":  [
+                                      1,
+                                      10,
+                                      3
+                                  ],
+                         "to":  [
+                                    3,
+                                    15,
+                                    13
+                                ],
+                         "rotation":  {
+                                          "angle":  0,
+                                          "axis":  "y",
+                                          "origin":  [
+                                                         0,
+                                                         6,
+                                                         6
+                                                     ]
+                                      },
+                         "faces":  {
+                                       "east":  {
+                                                    "uv":  [
+                                                               12.5,
+                                                               1.5,
+                                                               15,
+                                                               6.5
+                                                           ],
+                                                    "rotation":  270,
+                                                    "texture":  "#1"
+                                                },
+                                       "west":  {
+                                                    "uv":  [
+                                                               1,
+                                                               0,
+                                                               6,
+                                                               2.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                },
+                                       "up":  {
+                                                  "uv":  [
+                                                             8.5,
+                                                             1.5,
+                                                             9.5,
+                                                             6.5
+                                                         ],
+                                                  "texture":  "#1"
+                                              },
+                                       "down":  {
+                                                    "uv":  [
+                                                               8.5,
+                                                               1.5,
+                                                               9.5,
+                                                               6.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "piston_shaft_side",
+                         "from":  [
+                                      13,
+                                      10,
+                                      3
+                                  ],
+                         "to":  [
+                                    15,
+                                    15,
+                                    13
+                                ],
+                         "rotation":  {
+                                          "angle":  0,
+                                          "axis":  "y",
+                                          "origin":  [
+                                                         12,
+                                                         6,
+                                                         6
+                                                     ]
+                                      },
+                         "faces":  {
+                                       "east":  {
+                                                    "uv":  [
+                                                               1,
+                                                               0,
+                                                               6,
+                                                               2.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                },
+                                       "west":  {
+                                                    "uv":  [
+                                                               9,
+                                                               1.5,
+                                                               11.5,
+                                                               6.5
+                                                           ],
+                                                    "rotation":  90,
+                                                    "texture":  "#1"
+                                                },
+                                       "up":  {
+                                                  "uv":  [
+                                                             14.5,
+                                                             1.5,
+                                                             15.5,
+                                                             6.5
+                                                         ],
+                                                  "texture":  "#1"
+                                              },
+                                       "down":  {
+                                                    "uv":  [
+                                                               14.5,
+                                                               1.5,
+                                                               15.5,
+                                                               6.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "piston_shaft_side",
+                         "from":  [
+                                      1,
+                                      10,
+                                      13
+                                  ],
+                         "to":  [
+                                    15,
+                                    15,
+                                    15
+                                ],
+                         "rotation":  {
+                                          "angle":  0,
+                                          "axis":  "y",
+                                          "origin":  [
+                                                         0,
+                                                         6,
+                                                         12
+                                                     ]
+                                      },
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                8.5,
+                                                                1,
+                                                                15.5,
+                                                                3.5
+                                                            ],
+                                                     "texture":  "#1"
+                                                 },
+                                       "east":  {
+                                                    "uv":  [
+                                                               6,
+                                                               0,
+                                                               7,
+                                                               2.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                7,
+                                                                2.5
+                                                            ],
+                                                     "texture":  "#1"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               1,
+                                                               2.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                },
+                                       "up":  {
+                                                  "uv":  [
+                                                             8.5,
+                                                             6.5,
+                                                             15.5,
+                                                             7.5
+                                                         ],
+                                                  "texture":  "#1"
+                                              },
+                                       "down":  {
+                                                    "uv":  [
+                                                               8.5,
+                                                               0.5,
+                                                               15.5,
+                                                               1.5
+                                                           ],
+                                                    "texture":  "#1"
+                                                }
+                                   }
+                     },
+                     {
+                         "from":  [
+                                      11,
+                                      14,
+                                      3
+                                  ],
+                         "to":  [
+                                    13,
+                                    14,
+                                    13
+                                ],
+                         "rotation":  {
+                                          "angle":  0,
+                                          "axis":  "y",
+                                          "origin":  [
+                                                         3,
+                                                         13,
+                                                         3
+                                                     ]
+                                      },
+                         "faces":  {
+                                       "up":  {
+                                                  "uv":  [
+                                                             13.5,
+                                                             8.5,
+                                                             14.5,
+                                                             13.5
+                                                         ],
+                                                  "texture":  "#1"
+                                              },
+                                       "down":  {
+                                                    "uv":  [
+                                                               4,
+                                                               0,
+                                                               5,
+                                                               5
+                                                           ],
+                                                    "texture":  "#1"
+                                                }
+                                   }
+                     },
+                     {
+                         "from":  [
+                                      3,
+                                      14,
+                                      3
+                                  ],
+                         "to":  [
+                                    5,
+                                    14,
+                                    13
+                                ],
+                         "rotation":  {
+                                          "angle":  0,
+                                          "axis":  "y",
+                                          "origin":  [
+                                                         -5,
+                                                         13,
+                                                         3
+                                                     ]
+                                      },
+                         "faces":  {
+                                       "up":  {
+                                                  "uv":  [
+                                                             9.5,
+                                                             8.5,
+                                                             10.5,
+                                                             13.5
+                                                         ],
+                                                  "texture":  "#1"
+                                              }
+                                   }
+                     },
+                     {
+                         "from":  [
+                                      5,
+                                      14,
+                                      3
+                                  ],
+                         "to":  [
+                                    11,
+                                    14,
+                                    5
+                                ],
+                         "rotation":  {
+                                          "angle":  0,
+                                          "axis":  "y",
+                                          "origin":  [
+                                                         -5,
+                                                         13,
+                                                         3
+                                                     ]
+                                      },
+                         "faces":  {
+                                       "up":  {
+                                                  "uv":  [
+                                                             10.5,
+                                                             8.5,
+                                                             13.5,
+                                                             9.5
+                                                         ],
+                                                  "texture":  "#1"
+                                              }
+                                   }
+                     },
+                     {
+                         "from":  [
+                                      5,
+                                      14,
+                                      11
+                                  ],
+                         "to":  [
+                                    11,
+                                    14,
+                                    13
+                                ],
+                         "rotation":  {
+                                          "angle":  0,
+                                          "axis":  "y",
+                                          "origin":  [
+                                                         -5,
+                                                         13,
+                                                         11
+                                                     ]
+                                      },
+                         "faces":  {
+                                       "up":  {
+                                                  "uv":  [
+                                                             10.5,
+                                                             12.5,
+                                                             13.5,
+                                                             13.5
+                                                         ],
+                                                  "texture":  "#1"
+                                              }
+                                   }
+                     }
+                 ],
+    "groups":  [
+                   {
+                       "name":  "controller_short_case",
+                       "origin":  [
+                                      0,
+                                      6,
+                                      0
+                                  ],
+                       "scope":  0,
+                       "color":  0,
+                       "children":  [
+                                        0,
+                                        1,
+                                        2,
+                                        3,
+                                        4,
+                                        5,
+                                        6,
+                                        7
+                                    ]
+                   }
+               ]
+}
