@@ -73,79 +73,128 @@ dependencies {
     // src/simulatedApiStubs and are intentionally not packaged into the jar.
 }
 
-tasks.register('generatePistonModels') {
-    def manifestFile = layout.projectDirectory.file('src/main/resources/assets/simulated_pistons/models/block/simulated_piston/model_parts.json')
-    def modelRoot = layout.projectDirectory.dir('src/main/resources/assets/simulated_pistons/models/block/simulated_piston')
-    def generatedRoot = layout.projectDirectory.dir('src/generated/resources')
+def pistonModelManifest = layout.projectDirectory.file('src/main/resources/assets/simulated_pistons/models/block/simulated_piston/model_parts.json')
+def pistonModelRoot = layout.projectDirectory.dir('src/main/resources/assets/simulated_pistons/models/block/simulated_piston')
+def generatedResourcesRoot = layout.projectDirectory.dir('src/generated/resources')
 
-    inputs.file(manifestFile)
-    inputs.dir(modelRoot.dir('source_parts'))
+def renderPistonModels = { File outputRoot ->
+    def json = new groovy.json.JsonSlurper()
+    def manifest = json.parse(pistonModelManifest.asFile)
+    def outputs = new LinkedHashMap()
+
+    manifest.outputs.each { outputName, output ->
+        def merged = new LinkedHashMap()
+        merged.format_version = output.format_version ?: '1.21.11'
+        merged.credit = manifest.generated_credit
+        merged.parent = output.parent ?: 'minecraft:block/block'
+        if (output.texture_size != null) {
+            merged.texture_size = output.texture_size
+        }
+
+        def textures = new LinkedHashMap()
+        def elements = []
+        def groups = []
+
+        output.parts.each { partPath ->
+            def partFile = pistonModelRoot.file("${partPath}.json").asFile
+            if (!partFile.isFile()) {
+                throw new GradleException("Missing piston model source part '${partPath}' for '${outputName}'")
+            }
+
+            def part = json.parse(partFile)
+            part.textures?.each { key, value ->
+                if (textures.containsKey(key) && textures[key] != value) {
+                    throw new GradleException("Texture key '${key}' differs while generating '${outputName}' from '${partPath}'")
+                }
+                textures[key] = value
+            }
+
+            def elementOffset = elements.size()
+            part.elements?.each { element ->
+                elements.add(element)
+            }
+
+            part.groups?.each { group ->
+                groups.add(offsetGroupChildren(group, elementOffset))
+            }
+        }
+
+        if (!textures.isEmpty()) {
+            merged.textures = textures
+        }
+        merged.elements = elements
+        if (!groups.isEmpty()) {
+            merged.groups = groups
+        }
+        if (output.display_from != null) {
+            def displayFile = pistonModelRoot.file("${output.display_from}.json").asFile
+            if (!displayFile.isFile()) {
+                throw new GradleException("Missing piston model display source '${output.display_from}' for '${outputName}'")
+            }
+
+            def displaySource = json.parse(displayFile)
+            if (displaySource.display == null) {
+                throw new GradleException("Piston model display source '${output.display_from}' has no display block")
+            }
+            merged.display = displaySource.display
+        }
+
+        def projectOutputFile = layout.projectDirectory.file(output.path).asFile
+        def relativeOutputPath = generatedResourcesRoot.asFile.toPath().relativize(projectOutputFile.toPath()).toString()
+        def rendered = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(merged)) + System.lineSeparator()
+        outputs[relativeOutputPath] = rendered
+
+        def outputFile = new File(outputRoot, relativeOutputPath)
+        outputFile.parentFile.mkdirs()
+        outputFile.text = rendered
+    }
+
+    return outputs
+}
+
+tasks.register('generatePistonModels') {
+    def generatedRoot = generatedResourcesRoot
+
+    inputs.file(pistonModelManifest)
+    inputs.dir(pistonModelRoot.dir('source_parts'))
     outputs.dir(generatedRoot)
 
     doLast {
-        def json = new groovy.json.JsonSlurper()
-        def manifest = json.parse(manifestFile.asFile)
+        renderPistonModels(generatedRoot.asFile)
+    }
+}
 
-        manifest.outputs.each { outputName, output ->
-            def merged = new LinkedHashMap()
-            merged.format_version = output.format_version ?: '1.21.11'
-            merged.credit = manifest.generated_credit
-            merged.parent = output.parent ?: 'minecraft:block/block'
-            if (output.texture_size != null) {
-                merged.texture_size = output.texture_size
+tasks.register('verifyPistonModels') {
+    def generatedRoot = generatedResourcesRoot
+    def verifyRoot = layout.buildDirectory.dir('tmp/verifyPistonModels')
+
+    inputs.file(pistonModelManifest)
+    inputs.dir(pistonModelRoot.dir('source_parts'))
+    inputs.dir(generatedRoot)
+    outputs.upToDateWhen { false }
+    mustRunAfter tasks.named('generatePistonModels')
+
+    doLast {
+        def verifyDir = verifyRoot.get().asFile
+        delete verifyDir
+        def renderedOutputs = renderPistonModels(verifyDir)
+        def mismatches = []
+
+        renderedOutputs.each { relativePath, rendered ->
+            def generatedFile = new File(generatedRoot.asFile, relativePath)
+            if (!generatedFile.isFile()) {
+                mismatches.add("${relativePath} is missing")
+                return
             }
 
-            def textures = new LinkedHashMap()
-            def elements = []
-            def groups = []
-
-            output.parts.each { partPath ->
-                def partFile = modelRoot.file("${partPath}.json").asFile
-                if (!partFile.isFile()) {
-                    throw new GradleException("Missing piston model source part '${partPath}' for '${outputName}'")
-                }
-
-                def part = json.parse(partFile)
-                part.textures?.each { key, value ->
-                    if (textures.containsKey(key) && textures[key] != value) {
-                        throw new GradleException("Texture key '${key}' differs while generating '${outputName}' from '${partPath}'")
-                    }
-                    textures[key] = value
-                }
-
-                def elementOffset = elements.size()
-                part.elements?.each { element ->
-                    elements.add(element)
-                }
-
-                part.groups?.each { group ->
-                    groups.add(offsetGroupChildren(group, elementOffset))
-                }
+            def current = generatedFile.getText('UTF-8')
+            if (current.replace('\r\n', '\n') != rendered.replace('\r\n', '\n')) {
+                mismatches.add("${relativePath} is stale")
             }
+        }
 
-            if (!textures.isEmpty()) {
-                merged.textures = textures
-            }
-            merged.elements = elements
-            if (!groups.isEmpty()) {
-                merged.groups = groups
-            }
-            if (output.display_from != null) {
-                def displayFile = modelRoot.file("${output.display_from}.json").asFile
-                if (!displayFile.isFile()) {
-                    throw new GradleException("Missing piston model display source '${output.display_from}' for '${outputName}'")
-                }
-
-                def displaySource = json.parse(displayFile)
-                if (displaySource.display == null) {
-                    throw new GradleException("Piston model display source '${output.display_from}' has no display block")
-                }
-                merged.display = displaySource.display
-            }
-
-            def outputFile = layout.projectDirectory.file(output.path).asFile
-            outputFile.parentFile.mkdirs()
-            outputFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(merged)) + System.lineSeparator()
+        if (!mismatches.isEmpty()) {
+            throw new GradleException("Generated piston models are out of date:\n - " + mismatches.join('\n - ') + "\nRun './gradlew.bat generatePistonModels'.")
         }
     }
 }
@@ -185,4 +234,8 @@ tasks.withType(ProcessResources).configureEach {
     filesMatching('META-INF/neoforge.mods.toml') {
         expand replaceProperties
     }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyPistonModels')
 }

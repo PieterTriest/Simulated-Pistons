@@ -77,6 +77,22 @@ Do not include `source_parts/controller_gear.json` in `single_unassembled.json`:
 
 Generated files should include a `credit` marker saying they are generated from source parts and should not be edited directly.
 
+Run model generation from PowerShell with:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\JetBrains\WebStorm 2025.3.3\jbr"
+$env:GRADLE_USER_HOME = "D:\Git\Simulated-Pistons\.gradle-home"
+.\gradlew.bat generatePistonModels
+```
+
+Verify committed generated models are current with:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\JetBrains\WebStorm 2025.3.3\jbr"
+$env:GRADLE_USER_HOME = "D:\Git\Simulated-Pistons\.gradle-home"
+.\gradlew.bat verifyPistonModels
+```
+
 When opening generated models directly from `src/generated/resources` in Blockbench, texture previews may need manual relinking because that generated folder is not next to the texture source root. The JSON should still use namespaced texture references such as `simulated_pistons:block/simulated_piston/piston_frame`, which Minecraft resolves from the resource pack.
 
 Placeholder textures currently live here:
