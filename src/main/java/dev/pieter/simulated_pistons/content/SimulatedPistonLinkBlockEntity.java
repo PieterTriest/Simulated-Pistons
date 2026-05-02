@@ -88,6 +88,28 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
         }
     }
 
+    public void fixParentLinkingWhenMoved() {
+        if (this.level == null || this.level.isClientSide || this.parent == null) {
+            return;
+        }
+
+        final BlockEntity be = this.level.getBlockEntity(this.parent);
+        if (be instanceof final SimulatedPistonBlockEntity piston) {
+            piston.setLinkPos(this.getBlockPos());
+
+            final SubLevel newSubLevel = Sable.HELPER.getContaining(this);
+            if (newSubLevel != null) {
+                final UUID newSubLevelId = newSubLevel.getUniqueId();
+                if (!newSubLevelId.equals(piston.getSubLevelId())) {
+                    piston.setSubLevelId(newSubLevelId);
+                    piston.reattachConstraint(newSubLevel);
+                }
+            }
+
+            piston.associateLinkWithParent();
+        }
+    }
+
     @Override
     public AABB getRenderBoundingBox() {
         final BlockState state = this.getBlockState();

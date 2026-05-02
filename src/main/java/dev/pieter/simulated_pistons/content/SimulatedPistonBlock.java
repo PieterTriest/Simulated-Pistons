@@ -5,10 +5,12 @@ import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.block.IBE;
+import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import dev.simulated_team.simulated.util.extra_kinetics.ExtraKinetics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -33,7 +35,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonBlockEntity>, IRotate, ExtraKinetics.ExtraKineticsBlock {
+public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonBlockEntity>, IRotate, ExtraKinetics.ExtraKineticsBlock, BlockSubLevelAssemblyListener {
     public static final EnumProperty<Segment> SEGMENT = EnumProperty.create("segment", Segment.class);
     public static final BooleanProperty ASSEMBLED = BooleanProperty.create("assembled");
 
@@ -95,7 +97,7 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     @Override
     public void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState newState, final boolean movedByPiston) {
         final Direction facing = state.getValue(FACING);
-        if (!level.isClientSide && !state.is(newState.getBlock())) {
+        if (!level.isClientSide && !state.is(newState.getBlock()) && !isBeingAssembled(level, pos)) {
             cleanupChainAssembly(level, pos, facing);
         }
 
@@ -158,6 +160,16 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
         return SimulatedPistonBlockEntity.PistonCogBlockEntity.EXTRA_COGWHEEL_CONFIG;
     }
 
+    @Override
+    public void beforeMove(final ServerLevel originLevel, final ServerLevel resultingLevel, final BlockState newState, final BlockPos oldPos, final BlockPos newPos) {
+        this.withBlockEntityDo(originLevel, oldPos, SimulatedPistonBlockEntity::beforeAssemblyMove);
+    }
+
+    @Override
+    public void afterMove(final ServerLevel originLevel, final ServerLevel resultingLevel, final BlockState newState, final BlockPos oldPos, final BlockPos newPos) {
+        this.withBlockEntityDo(resultingLevel, newPos, SimulatedPistonBlockEntity::afterAssemblyMove);
+    }
+
     public static void updateChain(final Level level, final BlockPos origin, final Direction facing) {
         if (!(level.getBlockState(origin).getBlock() instanceof SimulatedPistonBlock)) {
             return;
@@ -209,6 +221,10 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
 
     private static boolean isAlignedPiston(final BlockState state, final Direction facing) {
         return state.getBlock() instanceof SimulatedPistonBlock && state.getValue(FACING) == facing;
+    }
+
+    private static boolean isBeingAssembled(final Level level, final BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof final SimulatedPistonBlockEntity be && be.isBeingAssembled();
     }
 
     private static boolean assembledHeadNeedsRecess(final BlockState state) {

@@ -2,9 +2,11 @@ package dev.pieter.simulated_pistons.content;
 
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
+import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -20,7 +22,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonLinkBlockEntity> {
+public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonLinkBlockEntity>, BlockSubLevelAssemblyListener {
     public SimulatedPistonLinkBlock(final Properties properties) {
         super(properties);
     }
@@ -33,6 +35,16 @@ public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements
     @Override
     public Direction.Axis getRotationAxis(final BlockState state) {
         return state.getValue(FACING).getAxis();
+    }
+
+    @Override
+    public void beforeMove(final ServerLevel originLevel, final ServerLevel resultingLevel, final BlockState newState, final BlockPos oldPos, final BlockPos newPos) {
+        this.withBlockEntityDo(originLevel, oldPos, SimulatedPistonLinkBlockEntity::beforeAssembly);
+    }
+
+    @Override
+    public void afterMove(final ServerLevel originLevel, final ServerLevel resultingLevel, final BlockState newState, final BlockPos oldPos, final BlockPos newPos) {
+        this.withBlockEntityDo(resultingLevel, newPos, SimulatedPistonLinkBlockEntity::fixParentLinkingWhenMoved);
     }
 
     @Override
