@@ -1,33 +1,32 @@
 {
-  "format_version": "1.21.11",
-  "credit": "Source part extracted from head_unassembled.json; edit this source part before regenerating composites.",
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "simulated_pistons:block/simulated_piston/piston_frame",
-    "shaft": "simulated_pistons:block/simulated_piston/piston_shaft"
-  },
-  "elements": [
-    {
-      "name": "piston_shaft_base",
-      "from": [1, 0, 1],
-      "to": [15, 12, 15],
-      "faces": {
-        "north": {"uv": [0, 2, 7, 8], "texture": "#shaft"},
-        "east": {"uv": [0, 2, 7, 8], "texture": "#shaft"},
-        "south": {"uv": [0, 2, 7, 8], "texture": "#shaft"},
-        "west": {"uv": [0, 2, 7, 8], "texture": "#shaft"},
-        "up": {"uv": [8.5, 0.5, 15.5, 7.5], "texture": "#shaft"},
-        "down": {"uv": [8.5, 7.5, 15.5, 0.5], "texture": "#shaft"}
-      }
-    }
-  ],
-  "groups": [
-    {
-      "name": "head_shaft_stub",
-      "origin": [0, 0, 0],
-      "scope": 0,
-      "color": 0,
-      "children": [0]
-    }
-  ]
+	"format_version": "1.21.11",
+	"credit": "Source part extracted from head_unassembled.json; edit this source part before regenerating composites.",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"shaft": "simulated_pistons:block/simulated_piston/piston_shaft",
+		"particle": "simulated_pistons:block/simulated_piston/piston_frame"
+	},
+	"elements": [
+		{
+			"name": "piston_shaft_base",
+			"from": [1, -1, 1],
+			"to": [15, 12, 15],
+			"faces": {
+				"north": {"uv": [0, 1.5, 7, 8], "texture": "#shaft"},
+				"east": {"uv": [0, 1.5, 7, 8], "texture": "#shaft"},
+				"south": {"uv": [0, 1.5, 7, 8], "texture": "#shaft"},
+				"west": {"uv": [0, 1.5, 7, 8], "texture": "#shaft"},
+				"up": {"uv": [8.5, 0.5, 15.5, 7.5], "texture": "#shaft"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "head_shaft_stub",
+			"origin": [0, 0, 0],
+			"scope": 0,
+			"color": 0,
+			"children": [0]
+		}
+	]
 }

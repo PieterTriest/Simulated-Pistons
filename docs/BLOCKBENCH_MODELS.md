@@ -49,9 +49,17 @@ Generated game-facing models should be emitted under:
 
 Generated models currently include:
 
+- `controller.json`
 - `single_unassembled.json`
 - `item.json`
 - `head_unassembled.json`
+
+`controller.json` is composed from:
+
+- `source_parts/controller_base.json`
+- `source_parts/controller_short_case.json`
+
+Do not include `source_parts/piston_link_plate.json` or `source_parts/controller_gear.json` in `controller.json`: multi-piston controller segments do not have an attachment face, and the block entity renderer draws the controller gear dynamically.
 
 `single_unassembled.json` is composed from:
 

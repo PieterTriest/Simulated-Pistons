@@ -7,8 +7,8 @@
         32
     ],
     "textures": {
-        "particle": "simulated_pistons:block/simulated_piston/piston_frame",
         "shaft": "simulated_pistons:block/simulated_piston/piston_shaft",
+        "particle": "simulated_pistons:block/simulated_piston/piston_frame",
         "2": "simulated_pistons:block/simulated_piston/piston_frame"
     },
     "elements": [
@@ -16,7 +16,7 @@
             "name": "piston_shaft_base",
             "from": [
                 1,
-                0,
+                -1,
                 1
             ],
             "to": [
@@ -28,7 +28,7 @@
                 "north": {
                     "uv": [
                         0,
-                        2,
+                        1.5,
                         7,
                         8
                     ],
@@ -37,7 +37,7 @@
                 "east": {
                     "uv": [
                         0,
-                        2,
+                        1.5,
                         7,
                         8
                     ],
@@ -46,7 +46,7 @@
                 "south": {
                     "uv": [
                         0,
-                        2,
+                        1.5,
                         7,
                         8
                     ],
@@ -55,7 +55,7 @@
                 "west": {
                     "uv": [
                         0,
-                        2,
+                        1.5,
                         7,
                         8
                     ],
@@ -67,15 +67,6 @@
                         0.5,
                         15.5,
                         7.5
-                    ],
-                    "texture": "#shaft"
-                },
-                "down": {
-                    "uv": [
-                        8.5,
-                        7.5,
-                        15.5,
-                        0.5
                     ],
                     "texture": "#shaft"
                 }

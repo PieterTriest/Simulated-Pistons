@@ -1,4 +1,5 @@
 {
+	"format_version": "1.21.11",
 	"credit": "Made with Blockbench",
 	"textures": {
 		"0": "simulated_pistons:block/simulated_piston/piston_shaft",
@@ -6,8 +7,8 @@
 	},
 	"elements": [
 		{
-			"from": [1, 0, 1],
-			"to": [15, 16, 15],
+			"from": [1, -1, 1],
+			"to": [15, 15, 15],
 			"faces": {
 				"north": {"uv": [0, 0, 7, 8], "texture": "#0"},
 				"east": {"uv": [0, 0, 7, 8], "texture": "#0"},
@@ -20,6 +21,7 @@
 		{
 			"name": "basic_pipe",
 			"origin": [0, 0, 0],
+			"scope": 0,
 			"color": 0,
 			"children": [0]
 		}
