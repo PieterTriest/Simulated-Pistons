@@ -27,6 +27,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -62,12 +63,23 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
-        if (!state.getValue(SEGMENT).hasController()) {
+        final Segment segment = state.getValue(SEGMENT);
+        if (segment.hasController()) {
+            if (!level.isClientSide) {
+                this.withBlockEntityDo(level, pos, SimulatedPistonBlockEntity::resetExtension);
+            }
+            return ItemInteractionResult.SUCCESS;
+        }
+
+        if (!isHeadPlateInteraction(state, pos, hitResult)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
         if (!level.isClientSide) {
-            this.withBlockEntityDo(level, pos, SimulatedPistonBlockEntity::resetExtension);
+            final BlockPos controllerPos = findControllerPos(level, pos, state.getValue(FACING));
+            if (controllerPos != null) {
+                this.withBlockEntityDo(level, controllerPos, SimulatedPistonBlockEntity::resetExtension);
+            }
         }
         return ItemInteractionResult.SUCCESS;
     }
@@ -201,6 +213,40 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
 
     private static boolean assembledHeadNeedsRecess(final BlockState state) {
         return state.getValue(ASSEMBLED) && state.getValue(SEGMENT).hasAttachmentFace();
+    }
+
+    private static boolean isHeadPlateInteraction(final BlockState state, final BlockPos pos, final BlockHitResult hitResult) {
+        return state.getValue(SEGMENT) == Segment.HEAD
+                && !state.getValue(ASSEMBLED)
+                && isInHeadPlateSlab(pos, hitResult.getLocation(), state.getValue(FACING));
+    }
+
+    private static boolean isInHeadPlateSlab(final BlockPos pos, final Vec3 hitLocation, final Direction facing) {
+        final double localX = hitLocation.x - pos.getX();
+        final double localY = hitLocation.y - pos.getY();
+        final double localZ = hitLocation.z - pos.getZ();
+        final double thickness = 4 / 16.0;
+
+        return switch (facing) {
+            case UP -> localY >= 1 - thickness;
+            case DOWN -> localY <= thickness;
+            case NORTH -> localZ <= thickness;
+            case SOUTH -> localZ >= 1 - thickness;
+            case WEST -> localX <= thickness;
+            case EAST -> localX >= 1 - thickness;
+        };
+    }
+
+    private static @Nullable BlockPos findControllerPos(final Level level, final BlockPos headPos, final Direction facing) {
+        BlockPos cursor = headPos;
+        while (isAlignedPiston(level.getBlockState(cursor), facing)) {
+            final BlockState state = level.getBlockState(cursor);
+            if (state.getValue(SEGMENT).hasController()) {
+                return cursor;
+            }
+            cursor = cursor.relative(facing.getOpposite());
+        }
+        return null;
     }
 
     private static VoxelShape recessedShape(final Direction facing) {
