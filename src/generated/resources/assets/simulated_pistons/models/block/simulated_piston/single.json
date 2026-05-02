@@ -20,7 +20,7 @@
             ],
             "to": [
                 12,
-                1,
+                10,
                 12
             ],
             "rotation": {
@@ -33,6 +33,42 @@
                 ]
             },
             "faces": {
+                "north": {
+                    "uv": [
+                        2,
+                        0,
+                        6,
+                        4.5
+                    ],
+                    "texture": "#bearing"
+                },
+                "east": {
+                    "uv": [
+                        2,
+                        0,
+                        6,
+                        4.5
+                    ],
+                    "texture": "#bearing"
+                },
+                "south": {
+                    "uv": [
+                        2,
+                        0,
+                        6,
+                        4.5
+                    ],
+                    "texture": "#bearing"
+                },
+                "west": {
+                    "uv": [
+                        2,
+                        0,
+                        6,
+                        4.5
+                    ],
+                    "texture": "#bearing"
+                },
                 "down": {
                     "uv": [
                         10,
