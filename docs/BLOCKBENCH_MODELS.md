@@ -47,16 +47,37 @@ Generated game-facing models should be emitted under:
 
 `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/`
 
-The first generated model should be `single_unassembled.json`, composed from:
+Generated models currently include:
+
+- `single_unassembled.json`
+- `item.json`
+- `head_unassembled.json`
+
+`single_unassembled.json` is composed from:
+
+- `source_parts/controller_base.json`
+- `source_parts/controller_short_case.json`
+- `source_parts/piston_link_plate.json`
+
+Do not include `source_parts/controller_gear.json` in `single_unassembled.json`: the block entity renderer draws the controller gear dynamically for `SINGLE` and `CONTROLLER` segments.
+
+`item.json` is composed from:
 
 - `source_parts/controller_base.json`
 - `source_parts/controller_gear.json`
 - `source_parts/controller_short_case.json`
 - `source_parts/piston_link_plate.json`
 
-After that is verified, generate `item.json` from the same composition, then generate `head_unassembled.json` from `source_parts/head_shaft_stub.json` and `source_parts/piston_link_plate.json`.
+`item.json` also preserves display transforms from `source_parts/item_display.json`.
+
+`head_unassembled.json` is composed from:
+
+- `source_parts/head_shaft_stub.json`
+- `source_parts/piston_link_plate.json`
 
 Generated files should include a `credit` marker saying they are generated from source parts and should not be edited directly.
+
+When opening generated models directly from `src/generated/resources` in Blockbench, texture previews may need manual relinking because that generated folder is not next to the texture source root. The JSON should still use namespaced texture references such as `simulated_pistons:block/simulated_piston/piston_frame`, which Minecraft resolves from the resource pack.
 
 Placeholder textures currently live here:
 

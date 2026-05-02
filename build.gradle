@@ -18,6 +18,7 @@ sourceSets {
     }
     main {
         compileClasspath += simulatedApiStubs.output
+        resources.srcDir 'src/generated/resources'
     }
 }
 
@@ -72,7 +73,100 @@ dependencies {
     // src/simulatedApiStubs and are intentionally not packaged into the jar.
 }
 
+tasks.register('generatePistonModels') {
+    def manifestFile = layout.projectDirectory.file('src/main/resources/assets/simulated_pistons/models/block/simulated_piston/model_parts.json')
+    def modelRoot = layout.projectDirectory.dir('src/main/resources/assets/simulated_pistons/models/block/simulated_piston')
+    def generatedRoot = layout.projectDirectory.dir('src/generated/resources')
+
+    inputs.file(manifestFile)
+    inputs.dir(modelRoot.dir('source_parts'))
+    outputs.dir(generatedRoot)
+
+    doLast {
+        def json = new groovy.json.JsonSlurper()
+        def manifest = json.parse(manifestFile.asFile)
+
+        manifest.outputs.each { outputName, output ->
+            def merged = new LinkedHashMap()
+            merged.format_version = output.format_version ?: '1.21.11'
+            merged.credit = manifest.generated_credit
+            merged.parent = output.parent ?: 'minecraft:block/block'
+            if (output.texture_size != null) {
+                merged.texture_size = output.texture_size
+            }
+
+            def textures = new LinkedHashMap()
+            def elements = []
+            def groups = []
+
+            output.parts.each { partPath ->
+                def partFile = modelRoot.file("${partPath}.json").asFile
+                if (!partFile.isFile()) {
+                    throw new GradleException("Missing piston model source part '${partPath}' for '${outputName}'")
+                }
+
+                def part = json.parse(partFile)
+                part.textures?.each { key, value ->
+                    if (textures.containsKey(key) && textures[key] != value) {
+                        throw new GradleException("Texture key '${key}' differs while generating '${outputName}' from '${partPath}'")
+                    }
+                    textures[key] = value
+                }
+
+                def elementOffset = elements.size()
+                part.elements?.each { element ->
+                    elements.add(element)
+                }
+
+                part.groups?.each { group ->
+                    groups.add(offsetGroupChildren(group, elementOffset))
+                }
+            }
+
+            if (!textures.isEmpty()) {
+                merged.textures = textures
+            }
+            merged.elements = elements
+            if (!groups.isEmpty()) {
+                merged.groups = groups
+            }
+            if (output.display_from != null) {
+                def displayFile = modelRoot.file("${output.display_from}.json").asFile
+                if (!displayFile.isFile()) {
+                    throw new GradleException("Missing piston model display source '${output.display_from}' for '${outputName}'")
+                }
+
+                def displaySource = json.parse(displayFile)
+                if (displaySource.display == null) {
+                    throw new GradleException("Piston model display source '${output.display_from}' has no display block")
+                }
+                merged.display = displaySource.display
+            }
+
+            def outputFile = layout.projectDirectory.file(output.path).asFile
+            outputFile.parentFile.mkdirs()
+            outputFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(merged)) + System.lineSeparator()
+        }
+    }
+}
+
+static def offsetGroupChildren(def group, int elementOffset) {
+    if (group instanceof Number) {
+        return group + elementOffset
+    }
+    if (group instanceof Map) {
+        def adjusted = new LinkedHashMap(group)
+        if (adjusted.children instanceof List) {
+            adjusted.children = adjusted.children.collect { child -> offsetGroupChildren(child, elementOffset) }
+        }
+        return adjusted
+    }
+    return group
+}
+
 tasks.withType(ProcessResources).configureEach {
+    dependsOn tasks.named('generatePistonModels')
+
     var replaceProperties = [
             minecraft_version_range: minecraft_version_range,
             neoforge_loader_version_range: neoforge_loader_version_range,

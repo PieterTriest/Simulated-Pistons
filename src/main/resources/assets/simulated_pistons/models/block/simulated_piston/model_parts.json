@@ -7,8 +7,28 @@
       "texture_size": [32, 32],
       "parts": [
         "source_parts/controller_base",
+        "source_parts/controller_short_case",
+        "source_parts/piston_link_plate"
+      ]
+    },
+    "item": {
+      "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/item.json",
+      "parent": "minecraft:block/block",
+      "texture_size": [32, 32],
+      "display_from": "source_parts/item_display",
+      "parts": [
+        "source_parts/controller_base",
         "source_parts/controller_gear",
         "source_parts/controller_short_case",
+        "source_parts/piston_link_plate"
+      ]
+    },
+    "head_unassembled": {
+      "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/head_unassembled.json",
+      "parent": "minecraft:block/block",
+      "texture_size": [32, 32],
+      "parts": [
+        "source_parts/head_shaft_stub",
         "source_parts/piston_link_plate"
       ]
     }
