@@ -1,6 +1,6 @@
 # Blockbench Model Editing
 
-The piston models are now self-contained under the `simulated_pistons` asset namespace.
+The piston models are self-contained under the `simulated_pistons` asset namespace, but some current placeholder textures and model parts still need provenance review before public redistribution. See [license-audit.md](license-audit.md) before packaging release files.
 
 Open these files in Blockbench:
 
@@ -11,9 +11,11 @@ Open these files in Blockbench:
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/bearing_plate.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/auger_axis_y.json`
 
-Local texture copies live here:
+Placeholder textures currently live here:
 
 - `src/main/resources/assets/simulated_pistons/textures/block/simulated_piston/swivel_bearing.png`
 - `src/main/resources/assets/simulated_pistons/textures/block/simulated_piston/auger.png`
 
-The blockstate files still rotate these models for each facing direction, so author the models in the default upward orientation.
+Do not treat those texture files as cleared final art. Replace them with original or explicitly permissioned assets before public distribution unless the license audit is updated with confirmed permission.
+
+The blockstate files rotate these models for each facing direction, so author the models in the default upward orientation.

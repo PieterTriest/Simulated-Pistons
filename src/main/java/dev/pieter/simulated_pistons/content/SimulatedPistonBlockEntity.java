@@ -75,12 +75,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private float assemblySuppressedSpeed;
     @Nullable
     private FreeConstraintHandle pistonConstraint;
-    private int debugTickCounter;
-    private float debugLastActuatorSpeed = Float.NaN;
-    private float debugLastExtension = Float.NaN;
-    private String debugLastActuatorSource = "unset";
-    @Nullable
-    private BlockPos debugLastActuatorSourcePos;
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
@@ -102,7 +96,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         final float actuatorSpeed = this.getActuatorSpeed();
         this.lastActuatorSpeed = actuatorSpeed;
         this.updateAssemblySuppression(actuatorSpeed);
-        this.debugInputTick("after_speed_read", actuatorSpeed, 0, false);
 
         final boolean toggledAssembly = this.toggleAssemblyNextTick;
         if (this.toggleAssemblyNextTick) {
@@ -146,41 +139,11 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.moveAssembledSubLevel();
             this.lastAppliedExtension = this.extension;
         }
-        this.debugInputTick("after_motion", actuatorSpeed, movementSpeed, extensionChanged);
 
         if (extensionChanged) {
             this.setChanged();
             this.sendData();
         }
-    }
-
-    private void debugInputTick(final String phase, final float actuatorSpeed, final float movementSpeed, final boolean extensionChanged) {
-        this.debugTickCounter++;
-        final boolean speedChanged = actuatorSpeed != this.debugLastActuatorSpeed;
-        final boolean extensionChangedSinceLastLog = this.extension != this.debugLastExtension;
-        final boolean periodic = this.isAttachmentAssembled() && this.debugTickCounter % 80 == 0;
-        if (!speedChanged && !extensionChanged && !extensionChangedSinceLastLog && !periodic) {
-            return;
-        }
-
-        this.debugLastActuatorSpeed = actuatorSpeed;
-        this.debugLastExtension = this.extension;
-        SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] {} controller={} assembled={} source={} sourcePos={} actuatorSpeed={} movementSpeed={} extension={} target={} chainLength={} constraint={} subLevelId={} linkPos={} suppressed={}/{}",
-                phase,
-                this.worldPosition,
-                this.isAttachmentAssembled(),
-                this.debugLastActuatorSource,
-                this.debugLastActuatorSourcePos,
-                actuatorSpeed,
-                movementSpeed,
-                this.extension,
-                this.lastTargetExtension,
-                this.chainLength,
-                this.pistonConstraint == null ? "null" : this.pistonConstraint.isValid(),
-                this.subLevelId,
-                this.linkPos,
-                this.assemblySuppressedUntilStopped,
-                this.assemblySuppressedSpeed);
     }
 
     private void updateAssemblySuppression(final float actuatorSpeed) {
@@ -235,21 +198,15 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private float getActuatorSpeed() {
         final float extraCogSpeed = this.cogwheel.getSpeed();
         if (extraCogSpeed != 0 || this.level == null) {
-            this.debugLastActuatorSource = extraCogSpeed != 0 ? "extra_cog" : "no_level";
-            this.debugLastActuatorSourcePos = this.worldPosition;
             return extraCogSpeed;
         }
 
         final BlockState state = this.getBlockState();
         if (!(state.getBlock() instanceof SimulatedPistonBlock)) {
-            this.debugLastActuatorSource = "not_piston";
-            this.debugLastActuatorSourcePos = this.worldPosition;
             return 0;
         }
 
         final Direction.Axis pistonAxis = state.getValue(SimulatedPistonBlock.FACING).getAxis();
-        this.debugLastActuatorSource = "none";
-        this.debugLastActuatorSourcePos = null;
         for (final Direction direction : Direction.values()) {
             if (direction.getAxis() == pistonAxis) {
                 continue;
@@ -267,8 +224,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
             final BlockEntity neighbour = this.level.getBlockEntity(neighbourPos);
             if (neighbour instanceof final KineticBlockEntity kineticNeighbour) {
-                this.debugLastActuatorSource = "neighbor_" + direction.getName();
-                this.debugLastActuatorSourcePos = neighbourPos;
                 return kineticNeighbour.getSpeed();
             }
         }
@@ -622,10 +577,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             if (subLevel != null) {
                 this.attachPistonConstraint(subLevel, state.getValue(SimulatedPistonBlock.FACING));
             } else {
-                SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] ensure constraint: missing sublevel controller={} subLevelId={} linkPos={} extension={}", this.worldPosition, this.subLevelId, this.linkPos, this.extension);
+                SimulatedPistons.LOGGER.warn("Unable to restore simulated piston constraint: missing sublevel at controller={} subLevelId={} linkPos={} extension={}", this.worldPosition, this.subLevelId, this.linkPos, this.extension);
             }
         } catch (final RuntimeException e) {
-            SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] ensure constraint exception: controller={} type={} message={}", this.worldPosition, e.getClass().getSimpleName(), e.getMessage());
+            SimulatedPistons.LOGGER.warn("Unable to restore simulated piston constraint at controller={}", this.worldPosition, e);
             this.lastMotionStatus = e.getClass().getSimpleName();
         }
     }
@@ -636,7 +591,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         }
 
         if (!this.pistonConstraint.isValid()) {
-            SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] motor update: invalid constraint controller={} subLevelId={} linkPos={} extension={}", this.worldPosition, this.subLevelId, this.linkPos, this.extension);
+            SimulatedPistons.LOGGER.warn("Skipping simulated piston motor update: invalid constraint at controller={} subLevelId={} linkPos={} extension={}", this.worldPosition, this.subLevelId, this.linkPos, this.extension);
             this.pistonConstraint = null;
             return;
         }
@@ -896,7 +851,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         @Override
         public void onSpeedChanged(final float previousSpeed) {
             super.onSpeedChanged(previousSpeed);
-            SimulatedPistons.LOGGER.info("[SP INPUT DEBUG] extra cog speed changed: parent={} previous={} current={} assembled={}", this.parent.getBlockPos(), previousSpeed, this.speed, this.parent.isAttachmentAssembled());
 
             if (this.speed != 0 && !this.parent.isAttachmentAssembled()) {
                 this.parent.requestAssemblyNextTick();
