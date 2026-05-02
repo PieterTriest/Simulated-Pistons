@@ -659,57 +659,6 @@
                     "texture": "#1"
                 }
             }
-        },
-        {
-            "name": "controller_shaft_end_fill",
-            "from": [
-                1,
-                12,
-                1
-            ],
-            "to": [
-                15,
-                16,
-                15
-            ],
-            "faces": {
-                "north": {
-                    "uv": [
-                        0,
-                        0,
-                        7,
-                        2
-                    ],
-                    "texture": "#1"
-                },
-                "east": {
-                    "uv": [
-                        0,
-                        0,
-                        7,
-                        2
-                    ],
-                    "texture": "#1"
-                },
-                "south": {
-                    "uv": [
-                        0,
-                        0,
-                        7,
-                        2
-                    ],
-                    "texture": "#1"
-                },
-                "west": {
-                    "uv": [
-                        0,
-                        0,
-                        7,
-                        2
-                    ],
-                    "texture": "#1"
-                }
-            }
         }
     ],
     "groups": [
@@ -745,19 +694,6 @@
                 7,
                 8,
                 9
-            ]
-        },
-        {
-            "name": "controller_shaft_end_fill",
-            "origin": [
-                0,
-                0,
-                0
-            ],
-            "scope": 0,
-            "color": 0,
-            "children": [
-                10
             ]
         }
     ]

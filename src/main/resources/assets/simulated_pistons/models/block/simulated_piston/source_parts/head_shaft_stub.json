@@ -9,7 +9,7 @@
 	"elements": [
 		{
 			"name": "piston_shaft_base",
-			"from": [1, -1, 1],
+			"from": [1, 0, 1],
 			"to": [15, 12, 15],
 			"faces": {
 				"north": {"uv": [0, 1.5, 7, 8], "texture": "#shaft"},
@@ -17,6 +17,63 @@
 				"south": {"uv": [0, 1.5, 7, 8], "texture": "#shaft"},
 				"west": {"uv": [0, 1.5, 7, 8], "texture": "#shaft"},
 				"up": {"uv": [8.5, 0.5, 15.5, 7.5], "texture": "#shaft"}
+			}
+		},
+		{
+			"name": "piston_shaft_side",
+			"from": [1, 0, 1],
+			"to": [15, 12, 3],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 6, 0]},
+			"faces": {
+				"north": {"uv": [0, 2, 7, 8], "texture": "#shaft"},
+				"east": {"uv": [6, 2, 7, 8], "texture": "#shaft"},
+				"west": {"uv": [0, 2, 1, 8], "texture": "#shaft"},
+				"up": {"uv": [8.5, 0.5, 15.5, 1.5], "texture": "#shaft"}
+			}
+		},
+		{
+			"name": "piston_shaft_side",
+			"from": [1, 0, 3],
+			"to": [3, 12, 13],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 6, 6]},
+			"faces": {
+				"west": {"uv": [1, 2, 6, 8], "texture": "#shaft"},
+				"up": {"uv": [8.5, 1.5, 9.5, 6.5], "texture": "#shaft"}
+			}
+		},
+		{
+			"name": "piston_shaft_side",
+			"from": [13, 0, 3],
+			"to": [15, 12, 13],
+			"rotation": {"angle": 0, "axis": "y", "origin": [12, 6, 6]},
+			"faces": {
+				"east": {"uv": [1, 2, 6, 8], "texture": "#shaft"},
+				"up": {"uv": [14.5, 1.5, 15.5, 6.5], "texture": "#shaft"}
+			}
+		},
+		{
+			"name": "piston_shaft_side",
+			"from": [1, 0, 13],
+			"to": [15, 12, 15],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 6, 12]},
+			"faces": {
+				"east": {"uv": [0, 2.5, 1, 8], "texture": "#shaft"},
+				"south": {"uv": [0, 2.5, 7, 8], "texture": "#shaft"},
+				"west": {"uv": [6, 2.5, 7, 8], "texture": "#shaft"},
+				"up": {"uv": [8.5, 6.5, 15.5, 7.5], "texture": "#shaft"}
+			}
+		},
+		{
+			"name": "piston_extension",
+			"from": [3, 12, 3],
+			"to": [13, 15, 13],
+			"rotation": {"angle": 0, "axis": "y", "origin": [-5, 13, 3]},
+			"faces": {
+				"north": {"uv": [14.5, 1.5, 16, 6.5], "rotation": 90, "texture": "#shaft"},
+				"east": {"uv": [9.5, 6.5, 14.5, 8], "texture": "#shaft"},
+				"south": {"uv": [8, 1.5, 9.5, 6.5], "rotation": 270, "texture": "#shaft"},
+				"west": {"uv": [9.5, 0, 14.5, 1.5], "rotation": 180, "texture": "#shaft"},
+				"up": {"uv": [9.5, 8.5, 14.5, 13.5], "texture": "#shaft"}
 			}
 		}
 	],
@@ -27,6 +84,14 @@
 			"scope": 0,
 			"color": 0,
 			"children": [0]
-		}
+		},
+		{
+			"name": "controller_short_case",
+			"origin": [0, 6, 0],
+			"scope": 0,
+			"color": 0,
+			"children": [1, 2, 3, 4]
+		},
+		5
 	]
 }

@@ -1,0 +1,30 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Controller-only shaft end filler; keeps follower shaft models inside normal block bounds.",
+	"textures": {
+		"1": "simulated_pistons:block/simulated_piston/piston_shaft",
+		"particle": "simulated_pistons:block/simulated_piston/piston_frame"
+	},
+	"elements": [
+		{
+			"name": "controller_shaft_end_fill",
+			"from": [1, 12, 1],
+			"to": [15, 16, 15],
+			"faces": {
+				"north": {"uv": [0, 0, 7, 2], "texture": "#1"},
+				"east": {"uv": [0, 0, 7, 2], "texture": "#1"},
+				"south": {"uv": [0, 0, 7, 2], "texture": "#1"},
+				"west": {"uv": [0, 0, 7, 2], "texture": "#1"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "controller_shaft_end_fill",
+			"origin": [0, 0, 0],
+			"scope": 0,
+			"color": 0,
+			"children": [0]
+		}
+	]
+}

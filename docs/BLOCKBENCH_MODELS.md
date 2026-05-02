@@ -5,7 +5,7 @@ The piston models are self-contained under the `simulated_pistons` asset namespa
 Open these files in Blockbench:
 
 - `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/controller.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/single.json`
+- `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/single.json`
 - `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/middle.json`
 - `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/head.json`
 - `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/head_unassembled.json`
@@ -21,11 +21,12 @@ Use these names when discussing or editing piston geometry. The most important d
 
 | Concept | Current file | Purpose | Notes |
 | --- | --- | --- | --- |
-| `controller_base` | generated `controller.json`, generated `item.json`, generated `single_unassembled.json`, hand-authored `single.json` | Stationary controller housing/base geometry. | Edit `source_parts/controller_base.json` for generated models. |
-| `controller_short_case` | generated `controller.json`, generated `item.json`, generated `single_unassembled.json`, hand-authored `single.json` | Short piston case attached to the controller/single body. | Edit `source_parts/controller_short_case.json` for generated models. |
+| `controller_base` | generated `controller.json`, generated `single.json`, generated `item.json`, generated `single_unassembled.json` | Stationary controller housing/base geometry. | Edit `source_parts/controller_base.json`. |
+| `controller_short_case` | generated `controller.json`, generated `single.json`, generated `item.json`, generated `single_unassembled.json` | Short piston case attached to the controller/single body. | Edit `source_parts/controller_short_case.json`. |
+| `controller_shaft_end_fill` | generated `controller.json` | One-pixel shaft filler at the output end of headless multi-piston controllers. | Edit `source_parts/controller_shaft_end_fill.json`. This avoids pushing follower shaft models outside their own block bounds. |
 | `controller_gear` | generated `partials/controller_gear.json` | Animated gear rendered by Java. | Edit `source_parts/controller_gear.json`. Do not bake it into in-world controller/single-unassembled block models. |
 | `middle_case` | generated `middle.json` | Full-length middle piston case for multi-block pistons. | Edit `source_parts/middle_shaft.json`. |
-| `terminal_head` | generated `head.json` | Last piston block in a piston chain. | Edit `source_parts/terminal_head.json`. This is not the link plate. |
+| `terminal_head` | generated `head.json` | Last piston block in a piston chain. | Generated from `source_parts/head_shaft_stub.json`; the assembled link/attachment face is rendered separately. |
 | `head_shaft_stub` | generated `head_unassembled.json` | Shaft/body part of the disassembled terminal head. | Edit `source_parts/head_shaft_stub.json`. |
 | `piston_link_plate` | generated `parts/piston_link_plate.json`, embedded in generated composites | Reusable attachment/link plate used by the standalone piston link block and disassembled piston composites. | Edit `source_parts/piston_link_plate.json`. |
 | `shaft_end` | `partials/shaft_sixteenth.json` | Small rotating shaft end rendered by Java. | Runtime partial; referenced from `SPPartialModels`. |
@@ -51,6 +52,7 @@ Generated models currently include:
 - `controller.json`
 - `middle.json`
 - `head.json`
+- `single.json`
 - `single_unassembled.json`
 - `item.json`
 - `head_unassembled.json`
@@ -61,8 +63,18 @@ Generated models currently include:
 
 - `source_parts/controller_base.json`
 - `source_parts/controller_short_case.json`
+- `source_parts/controller_shaft_end_fill.json`
 
 Do not include `source_parts/piston_link_plate.json` or `source_parts/controller_gear.json` in `controller.json`: multi-piston controller segments do not have an attachment face, and the block entity renderer draws the controller gear dynamically.
+
+The controller-only `controller_shaft_end_fill` covers the final one-pixel shaft gap left by the headless controller model. Keep follower shaft models, such as `middle.json` and `head.json`, inside normal `0..16` block bounds so Minecraft's baked lighting remains consistent.
+
+`single.json` is composed from:
+
+- `source_parts/controller_base.json`
+- `source_parts/controller_short_case.json`
+
+Do not include `source_parts/controller_shaft_end_fill.json` in `single.json`: a single piston still has an attachment face and does not need the headless-controller filler.
 
 `single_unassembled.json` is composed from:
 
@@ -88,7 +100,7 @@ Do not include `source_parts/controller_gear.json` in `single_unassembled.json`:
 
 `head.json` is composed from:
 
-- `source_parts/terminal_head.json`
+- `source_parts/head_shaft_stub.json`
 
 `middle.json` is composed from:
 

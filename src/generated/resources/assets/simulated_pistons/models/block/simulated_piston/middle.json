@@ -11,12 +11,12 @@
             "name": "middle_piston_shaft_body",
             "from": [
                 1,
-                -1,
+                0,
                 1
             ],
             "to": [
                 15,
-                15,
+                16,
                 15
             ],
             "faces": {

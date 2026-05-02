@@ -12,11 +12,12 @@
 			"from": [4, 4, 1],
 			"to": [12, 12, 17],
 			"faces": {
-				"east": {"uv": [1, 8, 6, 16], "rotation": 90, "texture": "#shaft"},
-				"west": {"uv": [1, 8, 6, 16], "rotation": 90, "texture": "#shaft"},
-				"up": {"uv": [1, 8, 6, 16], "texture": "#shaft"},
-				"down": {"uv": [1, 8, 6, 16], "texture": "#shaft"}
+				"east": {"uv": [0, 8, 4, 16], "rotation": 90, "texture": "#shaft"},
+				"west": {"uv": [0, 8, 4, 16], "rotation": 90, "texture": "#shaft"},
+				"up": {"uv": [0, 8, 4, 16], "texture": "#shaft"},
+				"down": {"uv": [0, 8, 4, 16], "texture": "#shaft"}
 			}
 		}
-	]
+	],
+	"display": {}
 }

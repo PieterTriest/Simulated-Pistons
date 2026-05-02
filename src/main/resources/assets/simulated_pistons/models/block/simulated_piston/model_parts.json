@@ -7,7 +7,8 @@
       "texture_size": [32, 32],
       "parts": [
         "source_parts/controller_base",
-        "source_parts/controller_short_case"
+        "source_parts/controller_short_case",
+        "source_parts/controller_shaft_end_fill"
       ]
     },
     "middle": {
@@ -21,7 +22,16 @@
       "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/head.json",
       "parent": "minecraft:block/block",
       "parts": [
-        "source_parts/terminal_head"
+        "source_parts/head_shaft_stub"
+      ]
+    },
+    "single": {
+      "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/single.json",
+      "parent": "minecraft:block/block",
+      "texture_size": [32, 32],
+      "parts": [
+        "source_parts/controller_base",
+        "source_parts/controller_short_case"
       ]
     },
     "single_unassembled": {
