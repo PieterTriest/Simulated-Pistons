@@ -7,74 +7,38 @@
         32
     ],
     "textures": {
-        "1": "simulated_pistons:block/simulated_piston/piston_shaft",
         "particle": "simulated_pistons:block/simulated_piston/piston_frame",
-        "bearing": "simulated_pistons:block/simulated_piston/piston_frame"
+        "bearing": "simulated_pistons:block/simulated_piston/piston_frame",
+        "1": "simulated_pistons:block/simulated_piston/piston_shaft"
     },
     "elements": [
         {
             "from": [
-                3,
-                -1,
-                3
+                4,
+                1,
+                4
             ],
             "to": [
-                13,
-                0,
-                13
+                12,
+                1,
+                12
             ],
             "rotation": {
                 "angle": 0,
                 "axis": "y",
                 "origin": [
                     0,
-                    0,
+                    1,
                     -24
                 ]
             },
             "faces": {
-                "north": {
-                    "uv": [
-                        9.5,
-                        9,
-                        14.5,
-                        9.5
-                    ],
-                    "texture": "#bearing"
-                },
-                "east": {
-                    "uv": [
-                        9.5,
-                        9,
-                        14.5,
-                        9.5
-                    ],
-                    "texture": "#bearing"
-                },
-                "south": {
-                    "uv": [
-                        9.5,
-                        9,
-                        14.5,
-                        9.5
-                    ],
-                    "texture": "#bearing"
-                },
-                "west": {
-                    "uv": [
-                        9.5,
-                        9,
-                        14.5,
-                        9.5
-                    ],
-                    "texture": "#bearing"
-                },
                 "down": {
                     "uv": [
-                        9.5,
-                        9.5,
-                        14.5,
-                        14.5
+                        10,
+                        10,
+                        14,
+                        14
                     ],
                     "texture": "#bearing"
                 }
@@ -84,7 +48,7 @@
             "from": [
                 0,
                 0,
-                13
+                12
             ],
             "to": [
                 16,
@@ -101,11 +65,20 @@
                 ]
             },
             "faces": {
+                "north": {
+                    "uv": [
+                        8,
+                        13,
+                        16,
+                        16
+                    ],
+                    "texture": "#bearing"
+                },
                 "east": {
                     "uv": [
                         8,
                         5,
-                        9.5,
+                        10,
                         8
                     ],
                     "texture": "#bearing"
@@ -121,7 +94,7 @@
                 },
                 "west": {
                     "uv": [
-                        14.5,
+                        14,
                         5,
                         16,
                         8
@@ -131,7 +104,7 @@
                 "up": {
                     "uv": [
                         8,
-                        14.5,
+                        14,
                         16,
                         16
                     ],
@@ -140,7 +113,7 @@
                 "down": {
                     "uv": [
                         8,
-                        14.5,
+                        14,
                         16,
                         16
                     ],
@@ -158,7 +131,7 @@
             "to": [
                 16,
                 6,
-                3
+                4
             ],
             "rotation": {
                 "angle": 0,
@@ -181,10 +154,19 @@
                 },
                 "east": {
                     "uv": [
-                        14.5,
+                        14,
                         5,
                         16,
                         8
+                    ],
+                    "texture": "#bearing"
+                },
+                "south": {
+                    "uv": [
+                        8.5,
+                        13,
+                        16,
+                        16
                     ],
                     "texture": "#bearing"
                 },
@@ -192,7 +174,7 @@
                     "uv": [
                         8,
                         5,
-                        9.5,
+                        10,
                         8
                     ],
                     "texture": "#bearing"
@@ -202,7 +184,7 @@
                         16,
                         8,
                         8,
-                        9.5
+                        10
                     ],
                     "texture": "#bearing"
                 },
@@ -211,7 +193,7 @@
                         8,
                         8,
                         16,
-                        9.5
+                        10
                     ],
                     "rotation": 180,
                     "texture": "#bearing"
@@ -222,62 +204,12 @@
             "from": [
                 0,
                 0,
-                3
+                4
             ],
             "to": [
-                3,
+                4,
                 6,
-                13
-            ],
-            "rotation": {
-                "angle": 0,
-                "axis": "y",
-                "origin": [
-                    0,
-                    0,
-                    -24
-                ]
-            },
-            "faces": {
-                "west": {
-                    "uv": [
-                        9.5,
-                        5,
-                        14.5,
-                        8
-                    ],
-                    "texture": "#bearing"
-                },
-                "up": {
-                    "uv": [
-                        8,
-                        9.5,
-                        9.5,
-                        14.5
-                    ],
-                    "texture": "#bearing"
-                },
-                "down": {
-                    "uv": [
-                        8,
-                        9.5,
-                        9.5,
-                        14.5
-                    ],
-                    "texture": "#bearing"
-                }
-            }
-        },
-        {
-            "from": [
-                13,
-                0,
-                3
-            ],
-            "to": [
-                16,
-                6,
-                13
+                12
             ],
             "rotation": {
                 "angle": 0,
@@ -291,28 +223,96 @@
             "faces": {
                 "east": {
                     "uv": [
-                        9.5,
+                        10,
+                        13,
+                        14,
+                        16
+                    ],
+                    "texture": "#bearing"
+                },
+                "west": {
+                    "uv": [
+                        10,
                         5,
-                        14.5,
+                        14,
                         8
                     ],
                     "texture": "#bearing"
                 },
                 "up": {
                     "uv": [
-                        14.5,
-                        9.5,
-                        16,
-                        14.5
+                        8,
+                        10,
+                        10,
+                        14
                     ],
                     "texture": "#bearing"
                 },
                 "down": {
                     "uv": [
-                        14.5,
-                        9.5,
+                        8,
+                        10,
+                        10,
+                        14
+                    ],
+                    "texture": "#bearing"
+                }
+            }
+        },
+        {
+            "from": [
+                12,
+                0,
+                4
+            ],
+            "to": [
+                16,
+                6,
+                12
+            ],
+            "rotation": {
+                "angle": 0,
+                "axis": "y",
+                "origin": [
+                    0,
+                    0,
+                    -24
+                ]
+            },
+            "faces": {
+                "east": {
+                    "uv": [
+                        10,
+                        5,
+                        14,
+                        8
+                    ],
+                    "texture": "#bearing"
+                },
+                "west": {
+                    "uv": [
+                        10,
+                        13,
+                        14,
+                        16
+                    ],
+                    "texture": "#bearing"
+                },
+                "up": {
+                    "uv": [
+                        14,
+                        10,
                         16,
-                        14.5
+                        14
+                    ],
+                    "texture": "#bearing"
+                },
+                "down": {
+                    "uv": [
+                        14,
+                        10,
+                        16,
+                        14
                     ],
                     "texture": "#bearing"
                 }

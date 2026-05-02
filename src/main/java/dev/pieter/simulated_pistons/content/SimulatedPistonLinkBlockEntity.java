@@ -29,6 +29,7 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
     @Nullable
     private UUID parentSubLevelId;
     private int chainLength = 1;
+    private float parentExtension;
     private boolean assembling;
 
     public SimulatedPistonLinkBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
@@ -53,12 +54,27 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
         this.parent = parent.getBlockPos();
         this.parentSubLevelId = parentSubLevel != null ? parentSubLevel.getUniqueId() : null;
         this.chainLength = parent.getChainLength();
+        this.parentExtension = parent.getExtension();
         this.setChanged();
         this.sendData();
     }
 
     public int getChainLength() {
         return this.chainLength;
+    }
+
+    public float getParentExtension() {
+        return this.parentExtension;
+    }
+
+    public void setParentExtension(final float parentExtension) {
+        final float clamped = Math.min(Math.max(0, parentExtension), this.chainLength);
+        if (this.parentExtension == clamped) {
+            return;
+        }
+        this.parentExtension = clamped;
+        this.setChanged();
+        this.sendData();
     }
 
     @Override
@@ -133,6 +149,7 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
             tag.putUUID("ParentSubLevelId", this.parentSubLevelId);
         }
         tag.putInt("ChainLength", this.chainLength);
+        tag.putFloat("ParentExtension", this.parentExtension);
     }
 
     @Override
@@ -141,5 +158,6 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
         this.parent = tag.contains("ParentPos") ? NbtUtils.readBlockPos(tag, "ParentPos").orElse(null) : null;
         this.parentSubLevelId = tag.hasUUID("ParentSubLevelId") ? tag.getUUID("ParentSubLevelId") : null;
         this.chainLength = Math.max(1, tag.getInt("ChainLength"));
+        this.parentExtension = Math.min(Math.max(0, tag.getFloat("ParentExtension")), this.chainLength);
     }
 }

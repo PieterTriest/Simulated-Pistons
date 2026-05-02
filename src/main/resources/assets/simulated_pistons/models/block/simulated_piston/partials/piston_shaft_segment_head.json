@@ -8,8 +8,8 @@
 	},
 	"elements": [
 		{
-			"name": "piston_shaft_segment",
-			"from": [4, 4, 0],
+			"name": "piston_shaft_segment_head",
+			"from": [4, 4, 1],
 			"to": [12, 12, 16],
 			"faces": {
 				"east": {"uv": [0, 8, 4, 16], "rotation": 90, "texture": "#shaft"},

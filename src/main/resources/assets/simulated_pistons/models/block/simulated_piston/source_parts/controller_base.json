@@ -1,341 +1,78 @@
-﻿{
-    "format_version":  "1.21.11",
-    "credit":  "Source part extracted from single.json; edit this source part before regenerating composites.",
-    "parent":  "minecraft:block/block",
-    "texture_size":  [
-                         32,
-                         32
-                     ],
-    "textures":  {
-                     "1":  "simulated_pistons:block/simulated_piston/piston_shaft",
-                     "particle":  "simulated_pistons:block/simulated_piston/piston_frame",
-                     "bearing":  "simulated_pistons:block/simulated_piston/piston_frame"
-                 },
-    "elements":  [
-                     {
-                         "from":  [
-                                      3,
-                                      -1,
-                                      3
-                                  ],
-                         "to":  [
-                                    13,
-                                    0,
-                                    13
-                                ],
-                         "rotation":  {
-                                          "angle":  0,
-                                          "axis":  "y",
-                                          "origin":  [
-                                                         0,
-                                                         0,
-                                                         -24
-                                                     ]
-                                      },
-                         "faces":  {
-                                       "north":  {
-                                                     "uv":  [
-                                                                9.5,
-                                                                9,
-                                                                14.5,
-                                                                9.5
-                                                            ],
-                                                     "texture":  "#bearing"
-                                                 },
-                                       "east":  {
-                                                    "uv":  [
-                                                               9.5,
-                                                               9,
-                                                               14.5,
-                                                               9.5
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                },
-                                       "south":  {
-                                                     "uv":  [
-                                                                9.5,
-                                                                9,
-                                                                14.5,
-                                                                9.5
-                                                            ],
-                                                     "texture":  "#bearing"
-                                                 },
-                                       "west":  {
-                                                    "uv":  [
-                                                               9.5,
-                                                               9,
-                                                               14.5,
-                                                               9.5
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                },
-                                       "down":  {
-                                                    "uv":  [
-                                                               9.5,
-                                                               9.5,
-                                                               14.5,
-                                                               14.5
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                }
-                                   }
-                     },
-                     {
-                         "from":  [
-                                      0,
-                                      0,
-                                      13
-                                  ],
-                         "to":  [
-                                    16,
-                                    6,
-                                    16
-                                ],
-                         "rotation":  {
-                                          "angle":  0,
-                                          "axis":  "y",
-                                          "origin":  [
-                                                         0,
-                                                         0,
-                                                         -24
-                                                     ]
-                                      },
-                         "faces":  {
-                                       "east":  {
-                                                    "uv":  [
-                                                               8,
-                                                               5,
-                                                               9.5,
-                                                               8
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                },
-                                       "south":  {
-                                                     "uv":  [
-                                                                8,
-                                                                5,
-                                                                16,
-                                                                8
-                                                            ],
-                                                     "texture":  "#bearing"
-                                                 },
-                                       "west":  {
-                                                    "uv":  [
-                                                               14.5,
-                                                               5,
-                                                               16,
-                                                               8
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                },
-                                       "up":  {
-                                                  "uv":  [
-                                                             8,
-                                                             14.5,
-                                                             16,
-                                                             16
-                                                         ],
-                                                  "texture":  "#bearing"
-                                              },
-                                       "down":  {
-                                                    "uv":  [
-                                                               8,
-                                                               14.5,
-                                                               16,
-                                                               16
-                                                           ],
-                                                    "rotation":  180,
-                                                    "texture":  "#bearing"
-                                                }
-                                   }
-                     },
-                     {
-                         "from":  [
-                                      0,
-                                      0,
-                                      0
-                                  ],
-                         "to":  [
-                                    16,
-                                    6,
-                                    3
-                                ],
-                         "rotation":  {
-                                          "angle":  0,
-                                          "axis":  "y",
-                                          "origin":  [
-                                                         0,
-                                                         0,
-                                                         -24
-                                                     ]
-                                      },
-                         "faces":  {
-                                       "north":  {
-                                                     "uv":  [
-                                                                8,
-                                                                5,
-                                                                16,
-                                                                8
-                                                            ],
-                                                     "texture":  "#bearing"
-                                                 },
-                                       "east":  {
-                                                    "uv":  [
-                                                               14.5,
-                                                               5,
-                                                               16,
-                                                               8
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                },
-                                       "west":  {
-                                                    "uv":  [
-                                                               8,
-                                                               5,
-                                                               9.5,
-                                                               8
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                },
-                                       "up":  {
-                                                  "uv":  [
-                                                             16,
-                                                             8,
-                                                             8,
-                                                             9.5
-                                                         ],
-                                                  "texture":  "#bearing"
-                                              },
-                                       "down":  {
-                                                    "uv":  [
-                                                               8,
-                                                               8,
-                                                               16,
-                                                               9.5
-                                                           ],
-                                                    "rotation":  180,
-                                                    "texture":  "#bearing"
-                                                }
-                                   }
-                     },
-                     {
-                         "from":  [
-                                      0,
-                                      0,
-                                      3
-                                  ],
-                         "to":  [
-                                    3,
-                                    6,
-                                    13
-                                ],
-                         "rotation":  {
-                                          "angle":  0,
-                                          "axis":  "y",
-                                          "origin":  [
-                                                         0,
-                                                         0,
-                                                         -24
-                                                     ]
-                                      },
-                         "faces":  {
-                                       "west":  {
-                                                    "uv":  [
-                                                               9.5,
-                                                               5,
-                                                               14.5,
-                                                               8
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                },
-                                       "up":  {
-                                                  "uv":  [
-                                                             8,
-                                                             9.5,
-                                                             9.5,
-                                                             14.5
-                                                         ],
-                                                  "texture":  "#bearing"
-                                              },
-                                       "down":  {
-                                                    "uv":  [
-                                                               8,
-                                                               9.5,
-                                                               9.5,
-                                                               14.5
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                }
-                                   }
-                     },
-                     {
-                         "from":  [
-                                      13,
-                                      0,
-                                      3
-                                  ],
-                         "to":  [
-                                    16,
-                                    6,
-                                    13
-                                ],
-                         "rotation":  {
-                                          "angle":  0,
-                                          "axis":  "y",
-                                          "origin":  [
-                                                         0,
-                                                         0,
-                                                         -24
-                                                     ]
-                                      },
-                         "faces":  {
-                                       "east":  {
-                                                    "uv":  [
-                                                               9.5,
-                                                               5,
-                                                               14.5,
-                                                               8
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                },
-                                       "up":  {
-                                                  "uv":  [
-                                                             14.5,
-                                                             9.5,
-                                                             16,
-                                                             14.5
-                                                         ],
-                                                  "texture":  "#bearing"
-                                              },
-                                       "down":  {
-                                                    "uv":  [
-                                                               14.5,
-                                                               9.5,
-                                                               16,
-                                                               14.5
-                                                           ],
-                                                    "texture":  "#bearing"
-                                                }
-                                   }
-                     }
-                 ],
-    "groups":  [
-                   {
-                       "name":  "controller_base",
-                       "origin":  [
-                                      0,
-                                      0,
-                                      -24
-                                  ],
-                       "scope":  0,
-                       "color":  0,
-                       "children":  [
-                                        0,
-                                        1,
-                                        2,
-                                        3,
-                                        4
-                                    ]
-                   }
-               ]
+{
+	"format_version": "1.21.11",
+	"credit": "Source part extracted from single.json; edit this source part before regenerating composites.",
+	"parent": "minecraft:block/block",
+	"texture_size": [32, 32],
+	"textures": {
+		"particle": "simulated_pistons:block/simulated_piston/piston_frame",
+		"bearing": "simulated_pistons:block/simulated_piston/piston_frame"
+	},
+	"elements": [
+		{
+			"from": [4, 1, 4],
+			"to": [12, 1, 12],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 1, -24]},
+			"faces": {
+				"down": {"uv": [10, 10, 14, 14], "texture": "#bearing"}
+			}
+		},
+		{
+			"from": [0, 0, 12],
+			"to": [16, 6, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 0, -24]},
+			"faces": {
+				"north": {"uv": [8, 13, 16, 16], "texture": "#bearing"},
+				"east": {"uv": [8, 5, 10, 8], "texture": "#bearing"},
+				"south": {"uv": [8, 5, 16, 8], "texture": "#bearing"},
+				"west": {"uv": [14, 5, 16, 8], "texture": "#bearing"},
+				"up": {"uv": [8, 14, 16, 16], "texture": "#bearing"},
+				"down": {"uv": [8, 14, 16, 16], "rotation": 180, "texture": "#bearing"}
+			}
+		},
+		{
+			"from": [0, 0, 0],
+			"to": [16, 6, 4],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 0, -24]},
+			"faces": {
+				"north": {"uv": [8, 5, 16, 8], "texture": "#bearing"},
+				"east": {"uv": [14, 5, 16, 8], "texture": "#bearing"},
+				"south": {"uv": [8.5, 13, 16, 16], "texture": "#bearing"},
+				"west": {"uv": [8, 5, 10, 8], "texture": "#bearing"},
+				"up": {"uv": [16, 8, 8, 10], "texture": "#bearing"},
+				"down": {"uv": [8, 8, 16, 10], "rotation": 180, "texture": "#bearing"}
+			}
+		},
+		{
+			"from": [0, 0, 4],
+			"to": [4, 6, 12],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 0, -24]},
+			"faces": {
+				"east": {"uv": [10, 13, 14, 16], "texture": "#bearing"},
+				"west": {"uv": [10, 5, 14, 8], "texture": "#bearing"},
+				"up": {"uv": [8, 10, 10, 14], "texture": "#bearing"},
+				"down": {"uv": [8, 10, 10, 14], "texture": "#bearing"}
+			}
+		},
+		{
+			"from": [12, 0, 4],
+			"to": [16, 6, 12],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 0, -24]},
+			"faces": {
+				"east": {"uv": [10, 5, 14, 8], "texture": "#bearing"},
+				"west": {"uv": [10, 13, 14, 16], "texture": "#bearing"},
+				"up": {"uv": [14, 10, 16, 14], "texture": "#bearing"},
+				"down": {"uv": [14, 10, 16, 14], "texture": "#bearing"}
+			}
+		}
+	],
+	"display": {},
+	"groups": [
+		{
+			"name": "controller_base",
+			"origin": [0, 0, -24],
+			"scope": 0,
+			"color": 0,
+			"children": [0, 1, 2, 3, 4]
+		}
+	]
 }

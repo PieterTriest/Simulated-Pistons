@@ -1,0 +1,23 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"particle": "simulated_pistons:block/simulated_piston/piston_shaft",
+		"shaft": "simulated_pistons:block/simulated_piston/piston_shaft"
+	},
+	"elements": [
+		{
+			"name": "piston_shaft_segment_tail_extension",
+			"from": [4, 4, 14],
+			"to": [12, 12, 20],
+			"faces": {
+				"east": {"uv": [0, 8, 4, 12], "rotation": 90, "texture": "#shaft"},
+				"west": {"uv": [0, 8, 4, 12], "rotation": 90, "texture": "#shaft"},
+				"up": {"uv": [0, 8, 4, 12], "texture": "#shaft"},
+				"down": {"uv": [0, 8, 4, 12], "texture": "#shaft"}
+			}
+		}
+	],
+	"display": {}
+}

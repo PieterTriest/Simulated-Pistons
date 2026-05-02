@@ -137,6 +137,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.ensurePistonConstraint();
             this.updatePistonConstraintMotor();
             this.moveAssembledSubLevel();
+            this.updateLinkRenderState();
             this.lastAppliedExtension = this.extension;
         }
 
@@ -496,6 +497,16 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.level.setBlockAndUpdate(this.linkPos, SPBlocks.SIMULATED_PISTON_LINK.get().defaultBlockState().setValue(SimulatedPistonLinkBlock.FACING, facing));
         if (this.level.getBlockEntity(this.linkPos) instanceof final SimulatedPistonLinkBlockEntity link) {
             link.setParent(this);
+        }
+    }
+
+    private void updateLinkRenderState() {
+        if (this.level == null || this.linkPos == null) {
+            return;
+        }
+
+        if (this.level.getBlockEntity(this.linkPos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.setParentExtension(this.extension);
         }
     }
 
