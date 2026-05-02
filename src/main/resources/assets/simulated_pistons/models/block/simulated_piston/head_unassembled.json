@@ -3,13 +3,13 @@
 	"credit": "Made with Blockbench",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"1": "simulated_pistons:block/simulated_piston/swivel_bearing",
-		"particle": "simulated_pistons:block/simulated_piston/swivel_bearing",
-		"shaft": "simulated_pistons:block/simulated_piston/auger"
+		"1": "simulated_pistons:block/simulated_piston/piston_frame",
+		"particle": "simulated_pistons:block/simulated_piston/piston_frame",
+		"shaft": "simulated_pistons:block/simulated_piston/piston_shaft"
 	},
 	"elements": [
 		{
-			"name": "auger_base",
+			"name": "piston_shaft_base",
 			"from": [1, 0, 1],
 			"to": [15, 12, 15],
 			"faces": {
@@ -87,7 +87,6 @@
 			}
 		}
 	],
-	"display": {},
 	"groups": [
 		0,
 		{

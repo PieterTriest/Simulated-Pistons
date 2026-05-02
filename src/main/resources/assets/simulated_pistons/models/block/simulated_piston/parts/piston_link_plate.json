@@ -1,10 +1,11 @@
 {
+	"format_version": "1.21.11",
 	"credit": "Made with Blockbench",
 	"parent": "block/block",
 	"texture_size": [32, 32],
 	"textures": {
-		"2": "simulated_pistons:block/simulated_piston/swivel_bearing",
-		"particle": "simulated_pistons:block/simulated_piston/swivel_bearing"
+		"2": "simulated_pistons:block/simulated_piston/piston_frame",
+		"particle": "simulated_pistons:block/simulated_piston/piston_frame"
 	},
 	"elements": [
 		{
@@ -89,7 +90,7 @@
 			"scale": [0.4, 0.4, 0.4]
 		},
 		"firstperson_lefthand": {
-			"rotation": [0, 225, 0],
+			"rotation": [0, -135, 0],
 			"scale": [0.4, 0.4, 0.4]
 		},
 		"ground": {
@@ -97,7 +98,7 @@
 			"scale": [0.25, 0.25, 0.25]
 		},
 		"gui": {
-			"rotation": [30, 225, 0],
+			"rotation": [30, -135, 0],
 			"scale": [0.625, 0.625, 0.625]
 		},
 		"fixed": {
@@ -108,6 +109,7 @@
 		{
 			"name": "head",
 			"origin": [0, 9, 16],
+			"scope": 0,
 			"color": 0,
 			"children": [0, 1, 2, 3, 4]
 		}

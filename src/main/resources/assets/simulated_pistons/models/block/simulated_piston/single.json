@@ -4,9 +4,9 @@
 	"parent": "minecraft:block/block",
 	"texture_size": [32, 32],
 	"textures": {
-		"1": "simulated_pistons:block/simulated_piston/auger",
-		"particle": "simulated_pistons:block/simulated_piston/swivel_bearing",
-		"bearing": "simulated_pistons:block/simulated_piston/swivel_bearing"
+		"1": "simulated_pistons:block/simulated_piston/piston_shaft",
+		"particle": "simulated_pistons:block/simulated_piston/piston_frame",
+		"bearing": "simulated_pistons:block/simulated_piston/piston_frame"
 	},
 	"elements": [
 		{
@@ -75,7 +75,7 @@
 			}
 		},
 		{
-			"name": "auger_connection",
+			"name": "piston_shaft_connection",
 			"from": [1, 10, 1],
 			"to": [15, 16, 15],
 			"rotation": {"angle": 0, "axis": "y", "origin": [0, 6, 0]},
@@ -90,7 +90,7 @@
 	],
 	"groups": [
 		{
-			"name": "swivel_bearing",
+			"name": "piston_frame",
 			"origin": [0, 3, 16],
 			"scope": 0,
 			"color": 0,

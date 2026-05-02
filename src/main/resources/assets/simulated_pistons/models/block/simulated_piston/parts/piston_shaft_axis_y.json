@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "simulated_pistons:block/simulated_piston/auger",
-		"particle": "simulated_pistons:block/simulated_piston/auger"
+		"0": "simulated_pistons:block/simulated_piston/piston_shaft",
+		"particle": "simulated_pistons:block/simulated_piston/piston_shaft"
 	},
 	"elements": [
 		{

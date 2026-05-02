@@ -3,19 +3,19 @@
 	"credit": "Made with Blockbench",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"particle": "simulated_pistons:block/simulated_piston/auger",
-		"shaft": "simulated_pistons:block/simulated_piston/auger"
+		"particle": "simulated_pistons:block/simulated_piston/piston_shaft",
+		"shaft": "simulated_pistons:block/simulated_piston/piston_shaft"
 	},
 	"elements": [
 		{
 			"name": "piston_shaft_segment",
-			"from": [3, 3, 1],
-			"to": [13, 13, 17],
+			"from": [4, 4, 1],
+			"to": [12, 12, 17],
 			"faces": {
-				"east": {"uv": [1, 0, 6, 8], "rotation": 90, "texture": "#shaft"},
-				"west": {"uv": [1, 0, 6, 8], "rotation": 90, "texture": "#shaft"},
-				"up": {"uv": [1, 0, 6, 8], "texture": "#shaft"},
-				"down": {"uv": [1, 0, 6, 8], "texture": "#shaft"}
+				"east": {"uv": [1, 8, 6, 16], "rotation": 90, "texture": "#shaft"},
+				"west": {"uv": [1, 8, 6, 16], "rotation": 90, "texture": "#shaft"},
+				"up": {"uv": [1, 8, 6, 16], "texture": "#shaft"},
+				"down": {"uv": [1, 8, 6, 16], "texture": "#shaft"}
 			}
 		}
 	]

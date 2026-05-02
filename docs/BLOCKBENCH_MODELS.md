@@ -9,13 +9,13 @@ Open these files in Blockbench:
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/head.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/head_unassembled.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/item.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/bearing_plate.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/auger_axis_y.json`
+- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/piston_link_plate.json`
+- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/piston_shaft_axis_y.json`
 
 Placeholder textures currently live here:
 
-- `src/main/resources/assets/simulated_pistons/textures/block/simulated_piston/swivel_bearing.png`
-- `src/main/resources/assets/simulated_pistons/textures/block/simulated_piston/auger.png`
+- `src/main/resources/assets/simulated_pistons/textures/block/simulated_piston/piston_frame.png`
+- `src/main/resources/assets/simulated_pistons/textures/block/simulated_piston/piston_shaft.png`
 
 Do not treat those texture files as cleared final art. Replace them with original or explicitly permissioned assets before public distribution unless the license audit is updated with confirmed permission.
 
