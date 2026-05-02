@@ -5,12 +5,17 @@ import com.simibubi.create.foundation.block.IBE;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -28,6 +33,18 @@ public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements
     @Override
     public Direction.Axis getRotationAxis(final BlockState state) {
         return state.getValue(FACING).getAxis();
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(final ItemStack stack, final BlockState state, final Level level, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult hitResult) {
+        if (!player.mayBuild() || player.isShiftKeyDown() || !player.getItemInHand(hand).isEmpty()) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.toggleParentAssembly();
+        }
+        return ItemInteractionResult.SUCCESS;
     }
 
     @Override
