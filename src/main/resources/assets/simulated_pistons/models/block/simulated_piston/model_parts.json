@@ -10,6 +10,20 @@
         "source_parts/controller_short_case"
       ]
     },
+    "middle": {
+      "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/middle.json",
+      "parent": "minecraft:block/block",
+      "parts": [
+        "source_parts/middle_shaft"
+      ]
+    },
+    "head": {
+      "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/head.json",
+      "parent": "minecraft:block/block",
+      "parts": [
+        "source_parts/terminal_head"
+      ]
+    },
     "single_unassembled": {
       "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/single_unassembled.json",
       "parent": "minecraft:block/block",
@@ -39,6 +53,23 @@
       "parts": [
         "source_parts/head_shaft_stub",
         "source_parts/piston_link_plate"
+      ]
+    },
+    "parts_piston_link_plate": {
+      "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/parts/piston_link_plate.json",
+      "parent": "minecraft:block/block",
+      "texture_size": [32, 32],
+      "display_from": "source_parts/piston_link_plate",
+      "parts": [
+        "source_parts/piston_link_plate"
+      ]
+    },
+    "partials_controller_gear": {
+      "path": "src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/partials/controller_gear.json",
+      "parent": "minecraft:block/block",
+      "texture_size": [32, 32],
+      "parts": [
+        "source_parts/controller_gear"
       ]
     }
   }

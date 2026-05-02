@@ -4,15 +4,14 @@ The piston models are self-contained under the `simulated_pistons` asset namespa
 
 Open these files in Blockbench:
 
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/controller.json`
+- `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/controller.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/single.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/middle.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/head.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/head_unassembled.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/item.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/piston_link_plate.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/parts/piston_shaft_axis_y.json`
-- `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/partials/controller_gear.json`
+- `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/middle.json`
+- `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/head.json`
+- `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/head_unassembled.json`
+- `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/item.json`
+- `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/parts/piston_link_plate.json`
+- `src/generated/resources/assets/simulated_pistons/models/block/simulated_piston/partials/controller_gear.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/partials/shaft_sixteenth.json`
 - `src/main/resources/assets/simulated_pistons/models/block/simulated_piston/partials/piston_shaft_segment.json`
 
@@ -22,13 +21,13 @@ Use these names when discussing or editing piston geometry. The most important d
 
 | Concept | Current file | Purpose | Notes |
 | --- | --- | --- | --- |
-| `controller_base` | `controller.json`, `single.json`, `item.json` | Stationary controller housing/base geometry. | This is duplicated today. Planned source owner: `source_parts/controller_base.json`. |
-| `controller_short_case` | `controller.json`, `single.json`, `item.json` | Short piston case attached to the controller/single body. | This should become a generated source part. |
-| `controller_gear` | `partials/controller_gear.json` | Animated gear rendered by Java. | Keep the runtime partial in `partials/`. Planned editable source owner: `source_parts/controller_gear.json`. |
-| `middle_case` | `middle.json` | Full-length middle piston case for multi-block pistons. | Already small and separate; keep hand-authored unless it starts sharing geometry. |
-| `terminal_head` | `head.json` | Last piston block in a piston chain. | This is not the link plate. Do not use `piston_link_plate` edits for terminal head shape changes. |
-| `head_shaft_stub` | `head_unassembled.json` | Shaft/body part of the disassembled terminal head. | Planned source owner: `source_parts/head_shaft_stub.json`. |
-| `piston_link_plate` | `parts/piston_link_plate.json`, embedded in `head_unassembled.json` | Reusable attachment/link plate used by the standalone piston link block and disassembled piston composites. | Planned source owner: `source_parts/piston_link_plate.json`; generated models should reuse it instead of duplicating it. |
+| `controller_base` | generated `controller.json`, generated `item.json`, generated `single_unassembled.json`, hand-authored `single.json` | Stationary controller housing/base geometry. | Edit `source_parts/controller_base.json` for generated models. |
+| `controller_short_case` | generated `controller.json`, generated `item.json`, generated `single_unassembled.json`, hand-authored `single.json` | Short piston case attached to the controller/single body. | Edit `source_parts/controller_short_case.json` for generated models. |
+| `controller_gear` | generated `partials/controller_gear.json` | Animated gear rendered by Java. | Edit `source_parts/controller_gear.json`. Do not bake it into in-world controller/single-unassembled block models. |
+| `middle_case` | generated `middle.json` | Full-length middle piston case for multi-block pistons. | Edit `source_parts/middle_shaft.json`. |
+| `terminal_head` | generated `head.json` | Last piston block in a piston chain. | Edit `source_parts/terminal_head.json`. This is not the link plate. |
+| `head_shaft_stub` | generated `head_unassembled.json` | Shaft/body part of the disassembled terminal head. | Edit `source_parts/head_shaft_stub.json`. |
+| `piston_link_plate` | generated `parts/piston_link_plate.json`, embedded in generated composites | Reusable attachment/link plate used by the standalone piston link block and disassembled piston composites. | Edit `source_parts/piston_link_plate.json`. |
 | `shaft_end` | `partials/shaft_sixteenth.json` | Small rotating shaft end rendered by Java. | Runtime partial; referenced from `SPPartialModels`. |
 | `shaft_segment` | `partials/piston_shaft_segment.json` | Repeated rotating shaft segment rendered by Java for piston links. | Runtime partial; referenced from `SPPartialModels`. |
 | `item_composite` | `item.json` | Inventory/item presentation. | Planned generated model matching `single_unassembled.json`. |
@@ -50,9 +49,13 @@ Generated game-facing models should be emitted under:
 Generated models currently include:
 
 - `controller.json`
+- `middle.json`
+- `head.json`
 - `single_unassembled.json`
 - `item.json`
 - `head_unassembled.json`
+- `parts/piston_link_plate.json`
+- `partials/controller_gear.json`
 
 `controller.json` is composed from:
 
@@ -82,6 +85,22 @@ Do not include `source_parts/controller_gear.json` in `single_unassembled.json`:
 
 - `source_parts/head_shaft_stub.json`
 - `source_parts/piston_link_plate.json`
+
+`head.json` is composed from:
+
+- `source_parts/terminal_head.json`
+
+`middle.json` is composed from:
+
+- `source_parts/middle_shaft.json`
+
+`parts/piston_link_plate.json` is composed from:
+
+- `source_parts/piston_link_plate.json`
+
+`partials/controller_gear.json` is composed from:
+
+- `source_parts/controller_gear.json`
 
 Generated files should include a `credit` marker saying they are generated from source parts and should not be edited directly.
 

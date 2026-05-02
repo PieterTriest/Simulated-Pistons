@@ -1,0 +1,62 @@
+{
+    "format_version": "1.21.11",
+    "credit": "Generated from simulated_piston source_parts; edit source parts instead.",
+    "parent": "minecraft:block/block",
+    "textures": {
+        "particle": "simulated_pistons:block/simulated_piston/piston_shaft",
+        "shaft": "simulated_pistons:block/simulated_piston/piston_shaft"
+    },
+    "elements": [
+        {
+            "name": "middle_piston_shaft_body",
+            "from": [
+                1,
+                -1,
+                1
+            ],
+            "to": [
+                15,
+                15,
+                15
+            ],
+            "faces": {
+                "north": {
+                    "uv": [
+                        0,
+                        0,
+                        7,
+                        8
+                    ],
+                    "texture": "#shaft"
+                },
+                "east": {
+                    "uv": [
+                        0,
+                        0,
+                        7,
+                        8
+                    ],
+                    "texture": "#shaft"
+                },
+                "south": {
+                    "uv": [
+                        0,
+                        0,
+                        7,
+                        8
+                    ],
+                    "texture": "#shaft"
+                },
+                "west": {
+                    "uv": [
+                        0,
+                        0,
+                        7,
+                        8
+                    ],
+                    "texture": "#shaft"
+                }
+            }
+        }
+    ]
+}

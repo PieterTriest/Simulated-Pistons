@@ -1,7 +1,6 @@
 {
 	"format_version": "1.21.11",
-	"credit": "Made with Blockbench",
-	"parent": "minecraft:block/block",
+	"credit": "Source part for the assembled terminal piston head; edit this source part before regenerating.",
 	"textures": {
 		"shaft": "simulated_pistons:block/simulated_piston/piston_shaft",
 		"particle": "simulated_pistons:block/simulated_piston/piston_frame"
@@ -9,8 +8,8 @@
 	"elements": [
 		{
 			"name": "piston_shaft_base",
-			"from": [1, 0, 1],
-			"to": [15, 15, 15],
+			"from": [1, -1, 1],
+			"to": [15, 14, 15],
 			"faces": {
 				"north": {"uv": [0, 0.5, 7, 8], "texture": "#shaft"},
 				"east": {"uv": [0, 0.5, 7, 8], "texture": "#shaft"},
@@ -22,9 +21,9 @@
 		},
 		{
 			"name": "piston_shaft_top_north",
-			"from": [1, 15, 1],
-			"to": [15, 16, 3],
-			"rotation": {"angle": 0, "axis": "y", "origin": [0, 4, 0]},
+			"from": [1, 14, 1],
+			"to": [15, 15, 3],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 3, 0]},
 			"faces": {
 				"north": {"uv": [0, 0, 7, 0.5], "texture": "#shaft"},
 				"east": {"uv": [6, 0, 7, 0.5], "texture": "#shaft"},
@@ -35,9 +34,9 @@
 		},
 		{
 			"name": "piston_shaft_top_south",
-			"from": [1, 15, 13],
-			"to": [15, 16, 15],
-			"rotation": {"angle": 0, "axis": "y", "origin": [0, 4, 0]},
+			"from": [1, 14, 13],
+			"to": [15, 15, 15],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 3, 0]},
 			"faces": {
 				"north": {"uv": [8.5, 8, 15.5, 8.5], "texture": "#shaft"},
 				"east": {"uv": [6, 0, 7, 0.5], "texture": "#shaft"},
@@ -48,9 +47,9 @@
 		},
 		{
 			"name": "piston_shaft_top_west",
-			"from": [1, 15, 3],
-			"to": [3, 16, 13],
-			"rotation": {"angle": 0, "axis": "y", "origin": [0, 4, 0]},
+			"from": [1, 14, 3],
+			"to": [3, 15, 13],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 3, 0]},
 			"faces": {
 				"north": {"uv": [0, 0, 1, 0.5], "texture": "#shaft"},
 				"east": {"uv": [9.5, 8, 14.5, 8.5], "texture": "#shaft"},
@@ -61,9 +60,9 @@
 		},
 		{
 			"name": "piston_shaft_top_east",
-			"from": [13, 15, 3],
-			"to": [15, 16, 13],
-			"rotation": {"angle": 0, "axis": "y", "origin": [0, 4, 0]},
+			"from": [13, 14, 3],
+			"to": [15, 15, 13],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 3, 0]},
 			"faces": {
 				"north": {"uv": [0, 0, 1, 0.5], "texture": "#shaft"},
 				"east": {"uv": [1, 0, 6, 0.5], "texture": "#shaft"},
@@ -74,11 +73,20 @@
 		},
 		{
 			"name": "piston_shaft_indent_floor",
-			"from": [3, 10.9375, 3],
-			"to": [13, 11, 13],
+			"from": [3, 9.9375, 3],
+			"to": [13, 10, 13],
 			"faces": {
 				"up": {"uv": [9.5, 1.5, 14.5, 6.5], "texture": "#shaft"}
 			}
+		}
+	],
+	"groups": [
+		{
+			"name": "terminal_head",
+			"origin": [0, 0, 0],
+			"scope": 0,
+			"color": 0,
+			"children": [0, 1, 2, 3, 4, 5]
 		}
 	]
 }
