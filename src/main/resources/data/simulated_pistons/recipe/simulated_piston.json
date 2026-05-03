@@ -1,19 +1,30 @@
 {
   "type": "minecraft:crafting_shaped",
-  "category": "redstone",
+  "category": "misc",
+  "key": {
+    "A": {
+      "tag": "minecraft:wooden_slabs"
+    },
+    "B": {
+      "item": "create:industrial_iron_block"
+    },
+    "C": {
+      "item": "create:cogwheel"
+    },
+    "P": {
+      "item": "create:piston_extension_pole"
+    },
+    "S": {
+      "item": "simulated:spring"
+    }
+  },
   "pattern": [
     " A ",
-    "ICI",
-    " S "
+    " B ",
+    "CPS"
   ],
-  "key": {
-    "A": "create:andesite_alloy",
-    "I": "create:iron_sheet",
-    "C": "create:andesite_casing",
-    "S": "create:shaft"
-  },
   "result": {
-    "id": "simulated_pistons:simulated_piston",
-    "count": 1
+    "count": 1,
+    "id": "simulated_pistons:simulated_piston"
   }
 }
