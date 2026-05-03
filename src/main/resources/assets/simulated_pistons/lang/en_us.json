@@ -1,5 +1,10 @@
 {
   "block.simulated_pistons.simulated_piston": "Simulated Piston",
   "item.simulated_pistons.simulated_piston": "Simulated Piston",
-  "block.simulated_pistons.simulated_piston.cog": "Piston Cog"
+  "block.simulated_pistons.simulated_piston.cog": "Piston Cog",
+  "simulated_pistons.scroll_option.piston_locking": "Redstone Locking Behaviour",
+  "simulated_pistons.generic.piston_always_locked": "Always Locked",
+  "simulated_pistons.generic.piston_unpowered_locked": "Unpowered -> Locked",
+  "simulated_pistons.generic.piston_powered_locked": "Powered -> Locked",
+  "simulated_pistons.generic.piston_always_unlocked": "Always Unlocked"
 }
