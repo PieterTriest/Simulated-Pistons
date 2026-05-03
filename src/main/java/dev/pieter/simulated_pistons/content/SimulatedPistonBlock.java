@@ -56,6 +56,11 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
 
     @Override
     protected ItemInteractionResult useItemOn(final ItemStack stack, final BlockState state, final Level level, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult hitResult) {
+        final ItemInteractionResult pistonPlacement = SPPlacementHelpers.tryPlacePiston(stack, state, level, pos, player, hand, hitResult);
+        if (pistonPlacement.consumesAction()) {
+            return pistonPlacement;
+        }
+
         final ItemInteractionResult cogPlacement = SPPlacementHelpers.tryPlaceCog(stack, state, level, pos, player, hand, hitResult);
         if (cogPlacement.consumesAction()) {
             return cogPlacement;
