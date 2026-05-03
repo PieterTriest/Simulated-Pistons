@@ -14,7 +14,6 @@ import dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
 import dev.ryanhcode.sable.api.physics.constraint.generic.GenericConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.constraint.generic.GenericConstraintHandle;
-import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.Pose3d;
@@ -60,8 +59,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private static final Component SCROLL_OPTION_TITLE = Component.translatable(SimulatedPistons.MOD_ID + ".scroll_option.piston_locking");
     private static final double LOCKED_STIFFNESS = 100000.0;
     private static final double LOCKED_DAMPING = 2500.0;
-    private static final double UNLOCKED_STIFFNESS = 0.0;
-    private static final double UNLOCKED_DAMPING = 0.0;
     private static final double ENDPOINT_EPSILON = 0.001;
     private static final double ENDPOINT_HARD_CLAMP_DISTANCE = 0.25;
 
@@ -69,8 +66,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private int chainLength = 1;
     private float extension;
     private float lastActuatorSpeed;
-    private float lastMovementSpeed;
-    private float lastTargetExtension;
     @Nullable
     private UUID subLevelId;
     @Nullable
@@ -79,7 +74,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private BlockPos disassemblyGoal;
     @Nullable
     private BlockPos linkPos;
-    private String lastAssemblyStatus = "idle";
     private double baseSubLevelX;
     private double baseSubLevelY;
     private double baseSubLevelZ;
@@ -97,8 +91,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private boolean pistonMotorActive;
     private boolean locking;
     private ScrollOptionBehaviour<LockingSetting> lockingMode;
-    private long lastDiagnosticLogTick = -1;
-    private double lastAttachedMass = Double.NaN;
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
@@ -168,8 +160,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.assembleNextTick = false;
 
         final float movementSpeed = this.getMovementSpeed(effectiveActuatorSpeed);
-        this.lastMovementSpeed = movementSpeed;
-        this.lastTargetExtension = movementSpeed > 0 ? this.chainLength : 0;
 
         final float previousExtension = this.extension;
         if (movementSpeed != 0) {
@@ -238,8 +228,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
     private void resetExtensionOnly() {
         this.extension = 0;
-        this.lastMovementSpeed = 0;
-        this.lastTargetExtension = 0;
         this.setChanged();
         this.sendData();
     }
@@ -356,9 +344,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
             if (result == null) {
                 if (!emptyFront) {
-                    this.lastAssemblyStatus = "nothing_to_assemble";
-                    this.setChanged();
-                    this.sendData();
                     return;
                 }
 
@@ -379,11 +364,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             if (subLevel instanceof final SubLevel attached) {
                 this.attachPistonConstraint(attached, facing);
             }
-            this.lastAssemblyStatus = "assembled";
             this.setChanged();
             this.sendData();
         } catch (final ReflectiveOperationException e) {
-            this.lastAssemblyStatus = e.getClass().getSimpleName();
+            SimulatedPistons.LOGGER.warn("Unable to assemble simulated piston at controller={}", this.worldPosition, e);
             this.setChanged();
             this.sendData();
         }
@@ -462,7 +446,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             link.setParent(this);
         }
         this.attachPistonConstraint(subLevel, facing);
-        this.lastAssemblyStatus = "assembled";
         this.setChanged();
         this.sendData();
     }
@@ -510,10 +493,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.linkPos = null;
             this.hasAssemblyPayload = false;
             this.setHeadAssembled(this.getBlockState().getValue(SimulatedPistonBlock.FACING), false);
-            this.lastAssemblyStatus = "disassembled";
             this.resetExtensionOnly();
         } catch (final ReflectiveOperationException e) {
-            this.lastAssemblyStatus = e.getClass().getSimpleName();
+            SimulatedPistons.LOGGER.warn("Unable to disassemble simulated piston at controller={}", this.worldPosition, e);
             this.setChanged();
             this.sendData();
         }
@@ -740,11 +722,9 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
                 : Mth.clamp(this.extension, 0, this.chainLength);
         final double signedExtension = targetExtension * facing.getAxisDirection().getStep();
         final boolean motorActive = this.locking || outsideLimits || this.lastActuatorSpeed != 0;
-        final double stiffness = motorActive ? LOCKED_STIFFNESS : UNLOCKED_STIFFNESS;
-        final double damping = motorActive ? LOCKED_DAMPING : UNLOCKED_DAMPING;
 
         if (motorActive) {
-            this.pistonConstraint.setMotor(ConstraintJointAxis.LINEAR[pistonAxisIndex], signedExtension, stiffness, damping, false, 0.0);
+            this.pistonConstraint.setMotor(ConstraintJointAxis.LINEAR[pistonAxisIndex], signedExtension, LOCKED_STIFFNESS, LOCKED_DAMPING, false, 0.0);
             this.pistonMotorActive = true;
         } else if (this.pistonMotorActive && attached != null) {
             this.pistonMotorActive = false;
@@ -752,15 +732,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             return;
         }
         this.pistonConstraint.setContactsEnabled(false);
-        final boolean massChanged = this.updateAttachedMassTracking(attached);
-        if (massChanged && !this.locking) {
-            this.wakePistonBodies();
-        }
         if (outsideLimits) {
             this.wakePistonBodies();
             this.hardClampOutOfBoundsExtension(actualExtension, targetExtension);
         }
-        this.logPistonDiagnostics(facing, attached, actualExtension, targetExtension, outsideLimits, signedExtension, stiffness, damping, motorActive, massChanged);
     }
 
     @Override
@@ -793,18 +768,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
                 + (parentLocalPosition.z - parentAnchorPosition.z) * facing.getStepZ();
     }
 
-    private boolean updateAttachedMassTracking(@Nullable final SubLevel attached) {
-        if (!(attached instanceof final ServerSubLevel serverSubLevel)) {
-            this.lastAttachedMass = Double.NaN;
-            return false;
-        }
-
-        final double attachedMass = serverSubLevel.getMassTracker().getMass();
-        final boolean changed = !Double.isNaN(this.lastAttachedMass) && Math.abs(attachedMass - this.lastAttachedMass) > 0.001;
-        this.lastAttachedMass = attachedMass;
-        return changed;
-    }
-
     private Vector3d getParentAnchorPosition(final Direction facing) {
         final BlockPos headPos = this.worldPosition.relative(facing, this.chainLength);
         return new Vector3d(headPos.getX() + .5, headPos.getY() + .5, headPos.getZ() + .5);
@@ -823,93 +786,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         }
 
         this.extension = (float) targetExtension;
-        this.lastMovementSpeed = 0;
-        this.lastTargetExtension = (float) targetExtension;
         this.moveAssembledSubLevel();
         this.updateLinkRenderState();
         this.setChanged();
         this.sendData();
-    }
-
-    private void logPistonDiagnostics(
-            final Direction facing,
-            @Nullable final SubLevel attached,
-            final double actualExtension,
-            final double targetExtension,
-            final boolean outsideLimits,
-            final double signedMotorTarget,
-            final double stiffness,
-            final double damping,
-            final boolean motorActive,
-            final boolean massChanged
-    ) {
-        if (this.level == null || this.level.isClientSide) {
-            return;
-        }
-
-        final long gameTime = this.level.getGameTime();
-        if (gameTime % 20 != 0 || this.lastDiagnosticLogTick == gameTime) {
-            return;
-        }
-
-        this.lastDiagnosticLogTick = gameTime;
-
-        final SubLevel containing = Sable.HELPER.getContaining(this);
-        final double attachedAxisVelocity = this.getAxisVelocity(attached, facing);
-        final double containingAxisVelocity = this.getAxisVelocity(containing, facing);
-        final double attachedMass = attached instanceof final ServerSubLevel serverSubLevel ? serverSubLevel.getMassTracker().getMass() : -1;
-        final double containingMass = containing instanceof final ServerSubLevel serverSubLevel ? serverSubLevel.getMassTracker().getMass() : -1;
-        final Vector3d linearImpulse = new Vector3d();
-        final Vector3d angularImpulse = new Vector3d();
-        if (this.pistonConstraint != null && this.pistonConstraint.isValid()) {
-            this.pistonConstraint.getJointImpulses(linearImpulse, angularImpulse);
-        }
-        final double linearImpulseAxis = linearImpulse.x * facing.getStepX() + linearImpulse.y * facing.getStepY() + linearImpulse.z * facing.getStepZ();
-        final int signal = this.level.getBestNeighborSignal(this.worldPosition);
-
-        SimulatedPistons.LOGGER.info(
-                "SP_DIAG piston={} facing={} signal={} locking={} assembled={} storedExt={} actualExt={} targetExt={} chainLength={} outsideLimits={} motorActive={} motorTarget={} stiffness={} damping={} actuatorSpeed={} attachedVelAxis={} containingVelAxis={} jointImpulseAxis={} jointImpulse=({}, {}, {}) attachedMass={} containingMass={} massChanged={} subLevelId={} linkPos={}",
-                this.worldPosition,
-                facing,
-                signal,
-                this.locking,
-                this.isAttachmentAssembled(),
-                this.extension,
-                actualExtension,
-                targetExtension,
-                this.chainLength,
-                outsideLimits,
-                motorActive,
-                signedMotorTarget,
-                stiffness,
-                damping,
-                this.lastActuatorSpeed,
-                attachedAxisVelocity,
-                containingAxisVelocity,
-                linearImpulseAxis,
-                linearImpulse.x,
-                linearImpulse.y,
-                linearImpulse.z,
-                attachedMass,
-                containingMass,
-                massChanged,
-                this.subLevelId,
-                this.linkPos
-        );
-    }
-
-    private double getAxisVelocity(@Nullable final SubLevel subLevel, final Direction facing) {
-        if (!(subLevel instanceof final ServerSubLevel serverSubLevel)) {
-            return 0;
-        }
-
-        final RigidBodyHandle handle = RigidBodyHandle.of(serverSubLevel);
-        if (handle == null || !handle.isValid()) {
-            return 0;
-        }
-
-        final Vector3d velocity = handle.getLinearVelocity(new Vector3d());
-        return velocity.x * facing.getStepX() + velocity.y * facing.getStepY() + velocity.z * facing.getStepZ();
     }
 
     private void syncExtensionFromAttachedSubLevel() {
@@ -928,8 +808,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         }
 
         this.extension = actualExtension;
-        this.lastMovementSpeed = 0;
-        this.lastTargetExtension = actualExtension;
         this.setChanged();
         this.sendData();
     }
@@ -1081,9 +959,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         tag.putInt("ChainLength", this.chainLength);
         tag.putFloat("Extension", this.extension);
         tag.putFloat("LastActuatorSpeed", this.lastActuatorSpeed);
-        tag.putFloat("LastMovementSpeed", this.lastMovementSpeed);
-        tag.putFloat("LastTargetExtension", this.lastTargetExtension);
-        tag.putString("LastAssemblyStatus", this.lastAssemblyStatus);
         tag.putBoolean("HasAssemblyPayload", this.hasAssemblyPayload);
         tag.putBoolean("AssemblySuppressedUntilStopped", this.assemblySuppressedUntilStopped);
         tag.putFloat("AssemblySuppressedSpeed", this.assemblySuppressedSpeed);
@@ -1113,7 +988,6 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         super.read(tag, registries, clientPacket);
         this.chainLength = Math.max(1, tag.getInt("ChainLength"));
         this.extension = Math.min(tag.getFloat("Extension"), this.chainLength);
-        this.lastAssemblyStatus = tag.getString("LastAssemblyStatus");
         this.hasAssemblyPayload = tag.contains("HasAssemblyPayload") ? tag.getBoolean("HasAssemblyPayload") : tag.hasUUID("SubLevelID");
         this.assemblySuppressedUntilStopped = tag.getBoolean("AssemblySuppressedUntilStopped");
         this.assemblySuppressedSpeed = tag.getFloat("AssemblySuppressedSpeed");
