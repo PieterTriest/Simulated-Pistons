@@ -1101,7 +1101,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
                     return 0;
                 }
 
-                return (15 - signal) / 15.0f;
+                final float normalized = (15 - signal) / 15.0f;
+                return normalized * normalized;
             }
             if (this == UNLOCKED_DEFAULT) {
                 if (signal <= 0) {
@@ -1111,7 +1112,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
                     return 1;
                 }
 
-                return signal / 15.0f;
+                final float normalized = signal / 15.0f;
+                return normalized * normalized;
             }
             if (this == UNLOCKED_ALWAYS) {
                 return 0;
