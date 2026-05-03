@@ -59,6 +59,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private static final Component SCROLL_OPTION_TITLE = Component.translatable(SimulatedPistons.MOD_ID + ".scroll_option.piston_locking");
     private static final double LOCKED_STIFFNESS = 100000.0;
     private static final double LOCKED_DAMPING = 2500.0;
+    private static final double SPRING_MAX_STIFFNESS = 50000.0;
+    private static final double SPRING_MAX_DAMPING = 1250.0;
     private static final double ENDPOINT_EPSILON = 0.001;
     private static final double ENDPOINT_HARD_CLAMP_DISTANCE = 0.25;
 
@@ -90,6 +92,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private GenericConstraintHandle pistonConstraint;
     private boolean pistonMotorActive;
     private boolean locking;
+    private int springSignal;
     private ScrollOptionBehaviour<LockingSetting> lockingMode;
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
@@ -169,7 +172,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         final boolean extensionChanged = this.extension != previousExtension;
         if (this.isAttachmentAssembled()) {
             this.ensurePistonConstraint();
-            if (movementSpeed == 0) {
+            if (movementSpeed == 0 && !this.isSpringForceActive()) {
                 this.syncExtensionFromAttachedSubLevel();
             }
             this.updatePistonConstraintMotor();
@@ -526,15 +529,18 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         }
 
         final LockingSetting setting = this.lockingMode != null ? this.lockingMode.get() : LockingSetting.LOCKED_DEFAULT;
-        final boolean shouldLock = setting.shouldLock(this.level.getBestNeighborSignal(this.worldPosition));
-        if (this.locking == shouldLock) {
+        final int signal = this.level.getBestNeighborSignal(this.worldPosition);
+        final boolean shouldLock = setting.shouldLock(signal);
+        final int newSpringSignal = setting.springSignal(signal);
+        if (this.locking == shouldLock && this.springSignal == newSpringSignal) {
             return;
         }
 
-        if (shouldLock) {
+        if (shouldLock && !this.locking) {
             this.syncExtensionFromAttachedSubLevel();
         }
         this.locking = shouldLock;
+        this.springSignal = newSpringSignal;
         final SubLevel attached = this.getAttachedSubLevel();
         if (this.pistonConstraint != null && attached != null) {
             this.reattachConstraint(attached);
@@ -721,10 +727,15 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
                 ? actualExtension < 0 ? 0 : this.chainLength
                 : Mth.clamp(this.extension, 0, this.chainLength);
         final double signedExtension = targetExtension * facing.getAxisDirection().getStep();
-        final boolean motorActive = this.locking || outsideLimits || this.lastActuatorSpeed != 0;
+        final double springStiffness = this.getSpringStiffness();
+        final double springDamping = this.getSpringDamping();
+        final boolean motorActive = this.locking || outsideLimits || this.lastActuatorSpeed != 0 || springStiffness > 0;
 
         if (motorActive) {
-            this.pistonConstraint.setMotor(ConstraintJointAxis.LINEAR[pistonAxisIndex], signedExtension, LOCKED_STIFFNESS, LOCKED_DAMPING, false, 0.0);
+            final boolean hardMotor = this.locking || outsideLimits || this.lastActuatorSpeed != 0;
+            final double stiffness = hardMotor ? LOCKED_STIFFNESS : springStiffness;
+            final double damping = hardMotor ? LOCKED_DAMPING : springDamping;
+            this.pistonConstraint.setMotor(ConstraintJointAxis.LINEAR[pistonAxisIndex], signedExtension, stiffness, damping, false, 0.0);
             this.pistonMotorActive = true;
         } else if (this.pistonMotorActive && attached != null) {
             this.pistonMotorActive = false;
@@ -736,6 +747,28 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             this.wakePistonBodies();
             this.hardClampOutOfBoundsExtension(actualExtension, targetExtension);
         }
+    }
+
+    private boolean isSpringForceActive() {
+        return this.getSpringStiffness() > 0;
+    }
+
+    private double getSpringStiffness() {
+        if (this.springSignal <= 1) {
+            return 0;
+        }
+
+        final double normalized = (this.springSignal - 1) / 14.0;
+        return SPRING_MAX_STIFFNESS * normalized * normalized;
+    }
+
+    private double getSpringDamping() {
+        if (this.springSignal <= 1) {
+            return 0;
+        }
+
+        final double normalized = (this.springSignal - 1) / 14.0;
+        return SPRING_MAX_DAMPING * normalized;
     }
 
     @Override
@@ -1036,6 +1069,14 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
                 return true;
             }
             return signal > 0 != (this == LOCKED_DEFAULT);
+        }
+
+        public int springSignal(final int signal) {
+            if (this != LOCKED_DEFAULT || signal <= 0) {
+                return 0;
+            }
+
+            return Mth.clamp(signal, 1, 15);
         }
     }
 
