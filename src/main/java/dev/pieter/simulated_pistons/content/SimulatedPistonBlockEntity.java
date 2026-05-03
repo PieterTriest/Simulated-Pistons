@@ -136,18 +136,19 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         }
 
         final float actuatorSpeed = this.getActuatorSpeed();
-        this.lastActuatorSpeed = actuatorSpeed;
-        this.updateAssemblySuppression(actuatorSpeed);
         this.updateLockingState();
+        final float effectiveActuatorSpeed = this.locking ? actuatorSpeed : 0;
+        this.lastActuatorSpeed = effectiveActuatorSpeed;
+        this.updateAssemblySuppression(effectiveActuatorSpeed);
 
         final boolean toggledAssembly = this.toggleAssemblyNextTick;
         if (this.toggleAssemblyNextTick) {
             this.toggleAssemblyNextTick = false;
             if (this.isAttachmentAssembled()) {
                 this.disassembleAttachment();
-                if (actuatorSpeed != 0) {
+                if (effectiveActuatorSpeed != 0) {
                     this.assemblySuppressedUntilStopped = true;
-                    this.assemblySuppressedSpeed = actuatorSpeed;
+                    this.assemblySuppressedSpeed = effectiveActuatorSpeed;
                     this.assembleNextTick = false;
                     this.setChanged();
                     this.sendData();
@@ -160,13 +161,13 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         }
 
         if (!this.assemblySuppressedUntilStopped
-                && (this.assembleNextTick || (!toggledAssembly && actuatorSpeed != 0))
+                && (this.assembleNextTick || (!toggledAssembly && effectiveActuatorSpeed != 0))
                 && !this.isAttachmentAssembled()) {
             this.assembleAttachment();
         }
         this.assembleNextTick = false;
 
-        final float movementSpeed = this.getMovementSpeed(actuatorSpeed);
+        final float movementSpeed = this.getMovementSpeed(effectiveActuatorSpeed);
         this.lastMovementSpeed = movementSpeed;
         this.lastTargetExtension = movementSpeed > 0 ? this.chainLength : 0;
 
