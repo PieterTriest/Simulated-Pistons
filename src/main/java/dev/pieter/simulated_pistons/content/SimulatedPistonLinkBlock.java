@@ -2,20 +2,29 @@ package dev.pieter.simulated_pistons.content;
 
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
+import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonLinkBlockEntity> {
+public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonLinkBlockEntity>, BlockSubLevelAssemblyListener {
     public SimulatedPistonLinkBlock(final Properties properties) {
         super(properties);
     }
@@ -28,6 +37,38 @@ public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements
     @Override
     public Direction.Axis getRotationAxis(final BlockState state) {
         return state.getValue(FACING).getAxis();
+    }
+
+    @Override
+    public void beforeMove(final ServerLevel originLevel, final ServerLevel resultingLevel, final BlockState newState, final BlockPos oldPos, final BlockPos newPos) {
+        this.withBlockEntityDo(originLevel, oldPos, SimulatedPistonLinkBlockEntity::beforeAssembly);
+    }
+
+    @Override
+    public void afterMove(final ServerLevel originLevel, final ServerLevel resultingLevel, final BlockState newState, final BlockPos oldPos, final BlockPos newPos) {
+        this.withBlockEntityDo(resultingLevel, newPos, SimulatedPistonLinkBlockEntity::fixParentLinkingWhenMoved);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(final ItemStack stack, final BlockState state, final Level level, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult hitResult) {
+        if (!player.mayBuild() || player.isShiftKeyDown() || !player.getItemInHand(hand).isEmpty()) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.toggleParentAssembly();
+        }
+        return ItemInteractionResult.SUCCESS;
+    }
+
+    @Override
+    public InteractionResult onWrenched(final BlockState state, final UseOnContext context) {
+        final Level level = context.getLevel();
+        final BlockPos pos = context.getClickedPos();
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.toggleParentAssembly();
+        }
+        return InteractionResult.SUCCESS;
     }
 
     @Override

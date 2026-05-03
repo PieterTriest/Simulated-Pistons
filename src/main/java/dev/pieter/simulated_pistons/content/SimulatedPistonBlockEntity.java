@@ -5,6 +5,7 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
+import dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
 import dev.ryanhcode.sable.api.physics.constraint.generic.GenericConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.constraint.generic.GenericConstraintHandle;
@@ -34,6 +35,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -45,7 +47,7 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
-public class SimulatedPistonBlockEntity extends KineticBlockEntity implements ExtraKinetics {
+public class SimulatedPistonBlockEntity extends KineticBlockEntity implements ExtraKinetics, BlockEntitySubLevelActor {
     private final PistonCogBlockEntity cogwheel;
     private int chainLength = 1;
     private float extension;
@@ -71,6 +73,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private boolean assembleNextTick;
     private boolean toggleAssemblyNextTick;
     private boolean assemblySuppressedUntilStopped;
+    private boolean assembling;
     private float assemblySuppressedSpeed;
     @Nullable
     private GenericConstraintHandle pistonConstraint;
@@ -258,6 +261,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
     public boolean isAttachmentAssembled() {
         return this.subLevelId != null;
+    }
+
+    public boolean isBeingAssembled() {
+        return this.assembling;
     }
 
     private boolean isControllerSegment() {
@@ -475,6 +482,53 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         this.disassembleAttachment();
     }
 
+    public void beforeAssemblyMove() {
+        this.assembling = true;
+    }
+
+    public void afterAssemblyMove() {
+        this.assembling = false;
+        this.associateLinkWithParent();
+        this.setChanged();
+        this.sendData();
+    }
+
+    public void associateLinkWithParent() {
+        if (this.level == null || this.linkPos == null) {
+            return;
+        }
+
+        if (this.level.getBlockState(this.linkPos).is(SPBlocks.SIMULATED_PISTON_LINK.get())
+                && this.level.getBlockEntity(this.linkPos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.setParent(this);
+        }
+    }
+
+    public void setLinkPos(final BlockPos linkPos) {
+        this.linkPos = linkPos;
+        this.setChanged();
+        this.sendData();
+    }
+
+    public @Nullable UUID getSubLevelId() {
+        return this.subLevelId;
+    }
+
+    public void setSubLevelId(@Nullable final UUID subLevelId) {
+        this.subLevelId = subLevelId;
+        this.setChanged();
+        this.sendData();
+    }
+
+    public void reattachConstraint(final SubLevel subLevel) {
+        final BlockState state = this.getBlockState();
+        if (!(state.getBlock() instanceof SimulatedPistonBlock)) {
+            return;
+        }
+
+        this.attachPistonConstraint(subLevel, state.getValue(SimulatedPistonBlock.FACING));
+    }
+
     private void captureBaseSubLevelPosition(final Object subLevel) throws ReflectiveOperationException {
         final Object position = this.getSubLevelPosition(subLevel);
         this.baseSubLevelX = this.readDouble(position, "x");
@@ -612,6 +666,16 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
         this.pistonConstraint.setMotor(ConstraintJointAxis.LINEAR[pistonAxisIndex], signedExtension, 100000.0, 2500.0, false, 0.0);
         this.pistonConstraint.setContactsEnabled(false);
+    }
+
+    @Override
+    public @Nullable Iterable<@NotNull SubLevel> sable$getConnectionDependencies() {
+        if (this.level == null || this.subLevelId == null) {
+            return null;
+        }
+
+        final SubLevel subLevel = SubLevelContainer.getContainer(this.level).getSubLevel(this.subLevelId);
+        return subLevel != null ? List.of(subLevel) : null;
     }
 
     private void wakePistonBodies() {

@@ -5,10 +5,12 @@ import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.block.IBE;
+import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
 import dev.pieter.simulated_pistons.index.SPBlockEntityTypes;
 import dev.simulated_team.simulated.util.extra_kinetics.ExtraKinetics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -27,12 +29,13 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonBlockEntity>, IRotate, ExtraKinetics.ExtraKineticsBlock {
+public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE<SimulatedPistonBlockEntity>, IRotate, ExtraKinetics.ExtraKineticsBlock, BlockSubLevelAssemblyListener {
     public static final EnumProperty<Segment> SEGMENT = EnumProperty.create("segment", Segment.class);
     public static final BooleanProperty ASSEMBLED = BooleanProperty.create("assembled");
 
@@ -53,6 +56,11 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
 
     @Override
     protected ItemInteractionResult useItemOn(final ItemStack stack, final BlockState state, final Level level, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult hitResult) {
+        final ItemInteractionResult pistonPlacement = SPPlacementHelpers.tryPlacePiston(stack, state, level, pos, player, hand, hitResult);
+        if (pistonPlacement.consumesAction()) {
+            return pistonPlacement;
+        }
+
         final ItemInteractionResult cogPlacement = SPPlacementHelpers.tryPlaceCog(stack, state, level, pos, player, hand, hitResult);
         if (cogPlacement.consumesAction()) {
             return cogPlacement;
@@ -62,12 +70,23 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
-        if (!state.getValue(SEGMENT).hasController()) {
+        final Segment segment = state.getValue(SEGMENT);
+        if (segment.hasController()) {
+            if (!level.isClientSide) {
+                this.withBlockEntityDo(level, pos, SimulatedPistonBlockEntity::resetExtension);
+            }
+            return ItemInteractionResult.SUCCESS;
+        }
+
+        if (!isHeadPlateInteraction(state, pos, hitResult)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
         if (!level.isClientSide) {
-            this.withBlockEntityDo(level, pos, SimulatedPistonBlockEntity::resetExtension);
+            final BlockPos controllerPos = findControllerPos(level, pos, state.getValue(FACING));
+            if (controllerPos != null) {
+                this.withBlockEntityDo(level, controllerPos, SimulatedPistonBlockEntity::resetExtension);
+            }
         }
         return ItemInteractionResult.SUCCESS;
     }
@@ -76,6 +95,9 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     public void onPlace(final BlockState state, final Level level, final BlockPos pos, final BlockState oldState, final boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         if (!level.isClientSide) {
+            if (!state.is(oldState.getBlock())) {
+                cleanupChainAssembly(level, pos, state.getValue(FACING));
+            }
             updateChain(level, pos, state.getValue(FACING));
         }
     }
@@ -83,7 +105,7 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     @Override
     public void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState newState, final boolean movedByPiston) {
         final Direction facing = state.getValue(FACING);
-        if (!level.isClientSide && !state.is(newState.getBlock())) {
+        if (!level.isClientSide && !state.is(newState.getBlock()) && !isBeingAssembled(level, pos)) {
             cleanupChainAssembly(level, pos, facing);
         }
 
@@ -98,8 +120,20 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     public InteractionResult onWrenched(final BlockState state, final UseOnContext context) {
         final Level level = context.getLevel();
         final BlockPos pos = context.getClickedPos();
-        final InteractionResult result = super.onWrenched(state, context);
-        if (result.consumesAction() && !level.isClientSide) {
+
+        BlockState rotated = this.getRotatedBlockState(state, context.getClickedFace());
+        if (!rotated.canSurvive(level, pos)) {
+            return InteractionResult.PASS;
+        }
+
+        if (!level.isClientSide) {
+            cleanupChainAssembly(level, pos, state.getValue(FACING));
+        }
+
+        rotated = this.getRotatedBlockState(level.getBlockState(pos), context.getClickedFace());
+        KineticBlockEntity.switchToBlockState(level, pos, this.updateAfterWrenched(rotated, context));
+
+        if (!level.isClientSide) {
             final BlockState updated = level.getBlockState(pos);
             if (updated.getBlock() instanceof SimulatedPistonBlock) {
                 updateChain(level, pos, updated.getValue(FACING));
@@ -108,7 +142,7 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
             updateChain(level, pos.relative(state.getValue(FACING).getOpposite()), state.getValue(FACING));
             IWrenchable.playRotateSound(level, pos);
         }
-        return result;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -144,6 +178,16 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     @Override
     public IRotate getExtraKineticsRotationConfiguration() {
         return SimulatedPistonBlockEntity.PistonCogBlockEntity.EXTRA_COGWHEEL_CONFIG;
+    }
+
+    @Override
+    public void beforeMove(final ServerLevel originLevel, final ServerLevel resultingLevel, final BlockState newState, final BlockPos oldPos, final BlockPos newPos) {
+        this.withBlockEntityDo(originLevel, oldPos, SimulatedPistonBlockEntity::beforeAssemblyMove);
+    }
+
+    @Override
+    public void afterMove(final ServerLevel originLevel, final ServerLevel resultingLevel, final BlockState newState, final BlockPos oldPos, final BlockPos newPos) {
+        this.withBlockEntityDo(resultingLevel, newPos, SimulatedPistonBlockEntity::afterAssemblyMove);
     }
 
     public static void updateChain(final Level level, final BlockPos origin, final Direction facing) {
@@ -199,8 +243,46 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
         return state.getBlock() instanceof SimulatedPistonBlock && state.getValue(FACING) == facing;
     }
 
+    private static boolean isBeingAssembled(final Level level, final BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof final SimulatedPistonBlockEntity be && be.isBeingAssembled();
+    }
+
     private static boolean assembledHeadNeedsRecess(final BlockState state) {
         return state.getValue(ASSEMBLED) && state.getValue(SEGMENT).hasAttachmentFace();
+    }
+
+    private static boolean isHeadPlateInteraction(final BlockState state, final BlockPos pos, final BlockHitResult hitResult) {
+        return state.getValue(SEGMENT) == Segment.HEAD
+                && !state.getValue(ASSEMBLED)
+                && isInHeadPlateSlab(pos, hitResult.getLocation(), state.getValue(FACING));
+    }
+
+    private static boolean isInHeadPlateSlab(final BlockPos pos, final Vec3 hitLocation, final Direction facing) {
+        final double localX = hitLocation.x - pos.getX();
+        final double localY = hitLocation.y - pos.getY();
+        final double localZ = hitLocation.z - pos.getZ();
+        final double thickness = 4 / 16.0;
+
+        return switch (facing) {
+            case UP -> localY >= 1 - thickness;
+            case DOWN -> localY <= thickness;
+            case NORTH -> localZ <= thickness;
+            case SOUTH -> localZ >= 1 - thickness;
+            case WEST -> localX <= thickness;
+            case EAST -> localX >= 1 - thickness;
+        };
+    }
+
+    private static @Nullable BlockPos findControllerPos(final Level level, final BlockPos headPos, final Direction facing) {
+        BlockPos cursor = headPos;
+        while (isAlignedPiston(level.getBlockState(cursor), facing)) {
+            final BlockState state = level.getBlockState(cursor);
+            if (state.getValue(SEGMENT).hasController()) {
+                return cursor;
+            }
+            cursor = cursor.relative(facing.getOpposite());
+        }
+        return null;
     }
 
     private static VoxelShape recessedShape(final Direction facing) {

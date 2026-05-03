@@ -2,6 +2,8 @@ package dev.pieter.simulated_pistons.content;
 
 import com.simibubi.create.content.kinetics.simpleRelays.CogWheelBlock;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
+import com.simibubi.create.foundation.placement.PoleHelper;
+import dev.pieter.simulated_pistons.index.SPBlocks;
 import net.createmod.catnip.placement.IPlacementHelper;
 import net.createmod.catnip.placement.PlacementHelpers;
 import net.createmod.catnip.placement.PlacementOffset;
@@ -19,16 +21,32 @@ import net.minecraft.world.phys.BlockHitResult;
 import java.util.function.Predicate;
 
 public class SPPlacementHelpers {
+    private static int pistonHelper = -1;
     private static int smallCogHelper = -1;
     private static int largeCogHelper = -1;
 
     public static void init() {
-        if (smallCogHelper != -1) {
+        if (pistonHelper != -1) {
             return;
         }
 
+        pistonHelper = PlacementHelpers.register(new PistonPlacementHelper());
         smallCogHelper = PlacementHelpers.register(new PistonCogPlacementHelper(false));
         largeCogHelper = PlacementHelpers.register(new PistonCogPlacementHelper(true));
+    }
+
+    public static ItemInteractionResult tryPlacePiston(final ItemStack stack, final BlockState state, final Level level, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult hitResult) {
+        if (!player.mayBuild() || player.isShiftKeyDown() || !(stack.getItem() instanceof final BlockItem blockItem)) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+
+        final IPlacementHelper helper = PlacementHelpers.get(pistonHelper);
+        if (!helper.matchesItem(stack) || !helper.matchesState(state)) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+
+        return helper.getOffset(player, level, state, pos, hitResult, stack)
+                .placeInWorld(level, blockItem, player, hand, hitResult);
     }
 
     public static ItemInteractionResult tryPlaceCog(final ItemStack stack, final BlockState state, final Level level, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult hitResult) {
@@ -43,6 +61,22 @@ public class SPPlacementHelpers {
 
         return helper.getOffset(player, level, state, pos, hitResult, stack)
                 .placeInWorld(level, blockItem, player, hand, hitResult);
+    }
+
+    private static class PistonPlacementHelper extends PoleHelper<Direction> {
+        PistonPlacementHelper() {
+            super(
+                    state -> state.getBlock() instanceof SimulatedPistonBlock,
+                    state -> state.getValue(SimulatedPistonBlock.FACING).getAxis(),
+                    SimulatedPistonBlock.FACING
+            );
+        }
+
+        @Override
+        public Predicate<ItemStack> getItemPredicate() {
+            return stack -> stack.getItem() instanceof final BlockItem blockItem
+                    && blockItem.getBlock() == SPBlocks.SIMULATED_PISTON.get();
+        }
     }
 
     private static class PistonCogPlacementHelper implements IPlacementHelper {
