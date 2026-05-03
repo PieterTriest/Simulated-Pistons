@@ -4,6 +4,7 @@ import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 import dev.pieter.simulated_pistons.content.SimulatedPistonBlock;
 import dev.pieter.simulated_pistons.content.SimulatedPistonBlockEntity;
 import dev.pieter.simulated_pistons.content.SimulatedPistonLinkBlock;
+import dev.pieter.simulated_pistons.content.SimulatedPistonLinkBlockEntity;
 import dev.pieter.simulated_pistons.index.SPBlocks;
 import net.createmod.catnip.math.Pointing;
 import net.createmod.ponder.api.PonderPalette;
@@ -46,8 +47,9 @@ public class SimulatedPistonScenes {
         final BlockPos piston = new BlockPos(2, 1, 2);
         final Selection pistonSelection = select.position(piston);
         final Selection sideInputCog = select.position(5, 0, 3);
-        final Selection transmissionCogs = select.fromTo(3, 1, 2, 4, 1, 3);
-        final Selection kinetics = sideInputCog.add(transmissionCogs).add(pistonSelection);
+        final Selection platformLargeCog = select.position(4, 1, 3);
+        final Selection platformSmallCog = select.position(3, 1, 2);
+        final Selection transmissionCogs = platformLargeCog.add(platformSmallCog);
         final Selection attachmentPlatform = select.fromTo(0, 2, 2, 4, 3, 2);
         final Selection attachmentRedstoneDecor = select.fromTo(0, 4, 2, 4, 4, 2);
 
@@ -97,14 +99,21 @@ public class SimulatedPistonScenes {
                 .placeNearTarget();
 
         scene.idle(80);
-        world.setKineticSpeed(kinetics.add(pistonSelection), 16);
-        setPistonCogKineticSpeed(scene, util, piston, 16);
-        final BlockPos hiddenPistonLink = new BlockPos(2, 6, 2);
+        world.setKineticSpeed(sideInputCog, -16);
+        world.setKineticSpeed(platformLargeCog, 16);
+        world.setKineticSpeed(platformSmallCog, -32);
+        world.setKineticSpeed(pistonSelection, 32);
+        setPistonCogKineticSpeed(scene, util, piston, 32);
+        final BlockPos hiddenPistonLink = new BlockPos(5, 0, 4);
         world.setBlock(
                 hiddenPistonLink,
                 SPBlocks.SIMULATED_PISTON_LINK.get().defaultBlockState().setValue(SimulatedPistonLinkBlock.FACING, Direction.UP),
                 false
         );
+        world.modifyBlockEntityNBT(select.position(hiddenPistonLink), SimulatedPistonLinkBlockEntity.class, nbt -> {
+            nbt.putInt("ChainLength", 1);
+            nbt.putFloat("ParentExtension", 1);
+        });
         final ElementLink<WorldSectionElement> pistonLink = world.showIndependentSectionImmediately(select.position(hiddenPistonLink));
         world.moveSection(pistonLink, Vec3.atLowerCornerOf(piston.subtract(hiddenPistonLink)), 0);
 
@@ -118,7 +127,7 @@ public class SimulatedPistonScenes {
         world.moveSection(pistonLink, new Vec3(0, 1, 0), 80);
         scene.idle(90);
 
-        world.setKineticSpeed(kinetics.add(pistonSelection), 0);
+        world.setKineticSpeed(sideInputCog.add(transmissionCogs).add(pistonSelection), 0);
         setPistonCogKineticSpeed(scene, util, piston, 0);
         scene.markAsFinished();
     }
