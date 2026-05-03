@@ -93,6 +93,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     private boolean pistonMotorActive;
     private boolean locking;
     private int springSignal;
+    private float actuatorStrength;
     private ScrollOptionBehaviour<LockingSetting> lockingMode;
 
     public SimulatedPistonBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
@@ -132,7 +133,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
 
         final float actuatorSpeed = this.getActuatorSpeed();
         this.updateLockingState();
-        final float effectiveActuatorSpeed = this.locking ? actuatorSpeed : 0;
+        final float effectiveActuatorSpeed = actuatorSpeed * this.actuatorStrength;
         this.lastActuatorSpeed = effectiveActuatorSpeed;
         this.updateAssemblySuppression(effectiveActuatorSpeed);
 
@@ -532,7 +533,8 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         final int signal = this.level.getBestNeighborSignal(this.worldPosition);
         final boolean shouldLock = setting.shouldLock(signal);
         final int newSpringSignal = setting.springSignal(signal);
-        if (this.locking == shouldLock && this.springSignal == newSpringSignal) {
+        final float newActuatorStrength = setting.actuatorStrength(signal);
+        if (this.locking == shouldLock && this.springSignal == newSpringSignal && this.actuatorStrength == newActuatorStrength) {
             return;
         }
 
@@ -541,6 +543,7 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         }
         this.locking = shouldLock;
         this.springSignal = newSpringSignal;
+        this.actuatorStrength = newActuatorStrength;
         final SubLevel attached = this.getAttachedSubLevel();
         if (this.pistonConstraint != null && attached != null) {
             this.reattachConstraint(attached);
@@ -729,10 +732,10 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
         final double signedExtension = targetExtension * facing.getAxisDirection().getStep();
         final double springStiffness = this.getSpringStiffness();
         final double springDamping = this.getSpringDamping();
-        final boolean motorActive = this.locking || outsideLimits || this.lastActuatorSpeed != 0 || springStiffness > 0;
+        final boolean hardMotor = this.locking || outsideLimits;
+        final boolean motorActive = hardMotor || springStiffness > 0;
 
         if (motorActive) {
-            final boolean hardMotor = this.locking || outsideLimits || this.lastActuatorSpeed != 0;
             final double stiffness = hardMotor ? LOCKED_STIFFNESS : springStiffness;
             final double damping = hardMotor ? LOCKED_DAMPING : springDamping;
             this.pistonConstraint.setMotor(ConstraintJointAxis.LINEAR[pistonAxisIndex], signedExtension, stiffness, damping, false, 0.0);
@@ -754,20 +757,20 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
     }
 
     private double getSpringStiffness() {
-        if (this.springSignal <= 1) {
+        if (this.springSignal <= 0) {
             return 0;
         }
 
-        final double normalized = (this.springSignal - 1) / 14.0;
+        final double normalized = this.springSignal / 14.0;
         return SPRING_MAX_STIFFNESS * normalized * normalized;
     }
 
     private double getSpringDamping() {
-        if (this.springSignal <= 1) {
+        if (this.springSignal <= 0) {
             return 0;
         }
 
-        final double normalized = (this.springSignal - 1) / 14.0;
+        final double normalized = this.springSignal / 14.0;
         return SPRING_MAX_DAMPING * normalized;
     }
 
@@ -1068,15 +1071,53 @@ public class SimulatedPistonBlockEntity extends KineticBlockEntity implements Ex
             if (this == LOCKED_ALWAYS) {
                 return true;
             }
-            return signal > 0 != (this == LOCKED_DEFAULT);
+            if (this == LOCKED_DEFAULT) {
+                return signal == 0;
+            }
+
+            return signal >= 15;
         }
 
         public int springSignal(final int signal) {
-            if (this != LOCKED_DEFAULT || signal <= 0) {
+            if (this == LOCKED_DEFAULT) {
+                return signal > 0 && signal < 15 ? 15 - signal : 0;
+            }
+            if (this == UNLOCKED_DEFAULT) {
+                return signal > 0 && signal < 15 ? signal : 0;
+            }
+
+            return 0;
+        }
+
+        public float actuatorStrength(final int signal) {
+            if (this == LOCKED_ALWAYS) {
+                return 1;
+            }
+            if (this == LOCKED_DEFAULT) {
+                if (signal <= 0) {
+                    return 1;
+                }
+                if (signal >= 15) {
+                    return 0;
+                }
+
+                return (15 - signal) / 15.0f;
+            }
+            if (this == UNLOCKED_DEFAULT) {
+                if (signal <= 0) {
+                    return 0;
+                }
+                if (signal >= 15) {
+                    return 1;
+                }
+
+                return signal / 15.0f;
+            }
+            if (this == UNLOCKED_ALWAYS) {
                 return 0;
             }
 
-            return Mth.clamp(signal, 1, 15);
+            return 0;
         }
     }
 
