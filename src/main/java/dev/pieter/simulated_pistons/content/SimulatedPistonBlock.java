@@ -95,6 +95,9 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     public void onPlace(final BlockState state, final Level level, final BlockPos pos, final BlockState oldState, final boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         if (!level.isClientSide) {
+            if (!state.is(oldState.getBlock())) {
+                cleanupChainAssembly(level, pos, state.getValue(FACING));
+            }
             updateChain(level, pos, state.getValue(FACING));
         }
     }
@@ -117,8 +120,20 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
     public InteractionResult onWrenched(final BlockState state, final UseOnContext context) {
         final Level level = context.getLevel();
         final BlockPos pos = context.getClickedPos();
-        final InteractionResult result = super.onWrenched(state, context);
-        if (result.consumesAction() && !level.isClientSide) {
+
+        BlockState rotated = this.getRotatedBlockState(state, context.getClickedFace());
+        if (!rotated.canSurvive(level, pos)) {
+            return InteractionResult.PASS;
+        }
+
+        if (!level.isClientSide) {
+            cleanupChainAssembly(level, pos, state.getValue(FACING));
+        }
+
+        rotated = this.getRotatedBlockState(level.getBlockState(pos), context.getClickedFace());
+        KineticBlockEntity.switchToBlockState(level, pos, this.updateAfterWrenched(rotated, context));
+
+        if (!level.isClientSide) {
             final BlockState updated = level.getBlockState(pos);
             if (updated.getBlock() instanceof SimulatedPistonBlock) {
                 updateChain(level, pos, updated.getValue(FACING));
@@ -127,7 +142,7 @@ public class SimulatedPistonBlock extends DirectionalKineticBlock implements IBE
             updateChain(level, pos.relative(state.getValue(FACING).getOpposite()), state.getValue(FACING));
             IWrenchable.playRotateSound(level, pos);
         }
-        return result;
+        return InteractionResult.SUCCESS;
     }
 
     @Override

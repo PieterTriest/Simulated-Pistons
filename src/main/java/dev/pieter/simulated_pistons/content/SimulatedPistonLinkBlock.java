@@ -8,9 +8,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -57,6 +59,16 @@ public class SimulatedPistonLinkBlock extends DirectionalKineticBlock implements
             link.toggleParentAssembly();
         }
         return ItemInteractionResult.SUCCESS;
+    }
+
+    @Override
+    public InteractionResult onWrenched(final BlockState state, final UseOnContext context) {
+        final Level level = context.getLevel();
+        final BlockPos pos = context.getClickedPos();
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof final SimulatedPistonLinkBlockEntity link) {
+            link.toggleParentAssembly();
+        }
+        return InteractionResult.SUCCESS;
     }
 
     @Override
