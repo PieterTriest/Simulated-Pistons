@@ -10,6 +10,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.pieter.simulated_pistons.index.SPBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -77,6 +78,38 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
         this.sendData();
     }
 
+    public void toggleParentAssembly() {
+        if (this.level == null || this.level.isClientSide || this.parent == null) {
+            return;
+        }
+
+        if (this.level.getBlockEntity(this.parent) instanceof final SimulatedPistonBlockEntity piston) {
+            piston.resetExtension();
+        }
+    }
+
+    public void fixParentLinkingWhenMoved() {
+        if (this.level == null || this.level.isClientSide || this.parent == null) {
+            return;
+        }
+
+        final BlockEntity be = this.level.getBlockEntity(this.parent);
+        if (be instanceof final SimulatedPistonBlockEntity piston) {
+            piston.setLinkPos(this.getBlockPos());
+
+            final SubLevel newSubLevel = Sable.HELPER.getContaining(this);
+            if (newSubLevel != null) {
+                final UUID newSubLevelId = newSubLevel.getUniqueId();
+                if (!newSubLevelId.equals(piston.getSubLevelId())) {
+                    piston.setSubLevelId(newSubLevelId);
+                    piston.reattachConstraint(newSubLevel);
+                }
+            }
+
+            piston.associateLinkWithParent();
+        }
+    }
+
     @Override
     public AABB getRenderBoundingBox() {
         final BlockState state = this.getBlockState();
@@ -92,10 +125,24 @@ public class SimulatedPistonLinkBlockEntity extends KineticBlockEntity implement
     @Override
     public void remove() {
         if (!this.level.isClientSide && !this.assembling && this.parent != null) {
-            this.level.destroyBlock(this.parent, false);
+            this.level.destroyBlock(this.getHeadPistonPos(), false);
         }
 
         super.remove();
+    }
+
+    private BlockPos getHeadPistonPos() {
+        if (this.level == null || this.parent == null) {
+            return this.worldPosition;
+        }
+
+        final BlockState parentState = this.level.getBlockState(this.parent);
+        if (!(parentState.getBlock() instanceof SimulatedPistonBlock)) {
+            return this.parent;
+        }
+
+        final Direction facing = parentState.getValue(SimulatedPistonBlock.FACING);
+        return this.parent.relative(facing, Math.max(0, this.chainLength - 1));
     }
 
     @Override
