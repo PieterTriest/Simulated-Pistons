@@ -1,6 +1,8 @@
 package dev.pieter.simulated_pistons;
 
 import dev.pieter.simulated_pistons.client.SPPartialModels;
+import dev.pieter.simulated_pistons.ponder.SPPonderPlugin;
+import net.createmod.ponder.foundation.PonderIndex;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.Mod;
 
@@ -8,5 +10,6 @@ import net.neoforged.fml.common.Mod;
 public class SimulatedPistonsClient {
     public SimulatedPistonsClient() {
         SPPartialModels.init();
+        PonderIndex.addPlugin(new SPPonderPlugin());
     }
 }
